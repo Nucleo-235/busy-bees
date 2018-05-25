@@ -50,7 +50,7 @@ export const calculateSummary = (projectId) => {
         }
         if (project.price && project.price > 0) {
           baseSummary.availableAmount = Math.max(project.price - baseSummary.amountSpent, 0);
-          baseSummary.difficultyProgress = Math.min(baseSummary.amountSpent / project.price, 1);
+          baseSummary.spentProgress = Math.min(baseSummary.amountSpent / project.price, 1);
         }
         resolve(baseSummary);
       }, reject);
