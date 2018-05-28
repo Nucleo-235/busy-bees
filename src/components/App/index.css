@@ -1,3 +1,14 @@
-.app {
-  margin: 20px;
+@import "~antd/dist/antd.css";
+
+.App {
+  text-align: center;
+}
+
+.App-header h1 {
+  color: whitesmoke;
+}
+
+.App-content {
+  padding-top: 100px;
+  padding-bottom: 100px;
 }

@@ -4,6 +4,10 @@ import { compose } from 'recompose';
 
 import { db } from '../../firebase';
 
+import { Row, Col, Card, Progress } from "antd";
+
+import './index.css';
+
 class HomePage extends Component {
   componentDidUpdate() {
     const { onSetHives, authUser } = this.props;
@@ -28,12 +32,43 @@ class HomePage extends Component {
   }
 }
 
-const ProjectList = ({ projects }) =>
-  <div>
-    {Object.keys(projects).map(key =>
-      <div key={key}>{projects[key].name}</div>
-    )}
+const ProgressItem = ({pct, title}) =>
+  <div className="progress">
+    <div className="">
+      <Progress type="circle" percent={Math.round(pct*100)} />
+    </div>
+    <div span={24} className="title">{title}</div>
   </div>
+
+const ValueItem = ({value, title}) =>
+  <div className="value-item">
+    <div className="value">
+      {value}
+    </div>
+    <div span={24} className="title">{title}</div>
+  </div>
+
+const ProjectSummary = ({summary}) =>
+  <div>
+    { summary.difficultyProgress && <ProgressItem pct={summary.difficultyProgress} title={'Progresso'} /> }
+    { summary.spentProgress && <ProgressItem pct={summary.spentProgress} title={'Gasto'} /> }
+    { !summary.difficultyProgress && <ValueItem value={summary.amountSpent} title={'Gasto ($)'} /> }
+    { !summary.spentProgress && <ValueItem value={summary.doneHours} title={'Gasto (h)'} /> }
+  </div>
+
+const ProjectItem = ({key, project}) => 
+  <Card title={project.name}>
+    { project.summary && <ProjectSummary summary={project.summary} /> }
+  </Card>
+
+const ProjectList = ({ projects }) =>
+  <Row gutter={8}>
+    {Object.keys(projects).map(key =>
+      <Col key={key} span={6}>
+        <ProjectItem key={key} project={projects[key]} />
+      </Col>
+    )}
+  </Row>
 
 const HiveList = ({ hives }) =>
   <div>

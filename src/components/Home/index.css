@@ -1,0 +1,17 @@
+.progress {
+  display: inline-block;
+  margin-right: 10px;
+}
+.progress .title {
+  margin-top: 10px;
+}
+.value-item {
+  display: inline-block;
+  margin-right: 10px;
+}
+.value-item .title {
+  margin-top: 10px;
+}
+.value-item .value {
+  font-size: 24px;
+}

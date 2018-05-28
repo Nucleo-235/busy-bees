@@ -13,25 +13,29 @@ import AccountPage from '../Account';
 import withAuthentication from '../Session/withAuthentication';
 import * as routes from '../../constants/routes';
 
+import { Layout } from "antd";
+
 import './index.css';
+
+const { Header, Footer, Content } = Layout;
 
 const App = () =>
   <Router>
-    <div className="app">
-      <Navigation />
+    <Layout className="App">
+      <Header className="App-header">
+        <h1>Busy Bees</h1>
+      </Header>
+      <Content className="App-content">
+        <Navigation />
 
-      <hr/>
-
-      <Route exact path={routes.HOME} component={() => <HomePage />} />
-      <Route exact path={routes.SIGN_UP} component={() => <SignUpPage />} />
-      <Route exact path={routes.SIGN_IN} component={() => <SignInPage />} />
-      <Route exact path={routes.PASSWORD_FORGET} component={() => <PasswordForgetPage />} />
-      <Route exact path={routes.ACCOUNT} component={() => <AccountPage />} />
-
-      <hr/>
-
-      <span>Found in <a href="https://roadtoreact.com/course-details?courseId=TAMING_THE_STATE">Taming the State in React</a></span> | <span>Star the <a href="https://github.com/rwieruch/react-redux-firebase-authentication">Repository</a></span> | <span>Receive a <a href="https://www.getrevue.co/profile/rwieruch">Developer's Newsletter</a></span>
-    </div>
+        <Route exact path={routes.HOME} component={() => <HomePage />} />
+        <Route exact path={routes.SIGN_UP} component={() => <SignUpPage />} />
+        <Route exact path={routes.SIGN_IN} component={() => <SignInPage />} />
+        <Route exact path={routes.PASSWORD_FORGET} component={() => <PasswordForgetPage />} />
+        <Route exact path={routes.ACCOUNT} component={() => <AccountPage />} />
+      </Content>
+      <Footer className="App-footer">&copy; Busy Bees</Footer>
+    </Layout>
   </Router>
 
 export default withAuthentication(App);
