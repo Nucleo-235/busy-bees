@@ -2,27 +2,27 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 
-import withAuthorization from '../Session/withAuthorization';
 import { db } from '../../firebase';
 
 class HomePage extends Component {
-  componentDidMount() {
-    const { onSetHives } = this.props;
+  componentDidUpdate() {
+    const { onSetHives, authUser } = this.props;
 
-    db.onceGetHivesWithProjects().then(snapshot =>
-      onSetHives(snapshot)
-    );
+    if (authUser) {
+      db.onceGetHivesWithProjects().then(snapshot =>
+        onSetHives(snapshot)
+      );
+    }
   }
 
   render() {
-    const { hives } = this.props;
+    const { hives, authUser } = this.props;
 
+    var hivesComponent = authUser && !!hives ? <HiveList hives={hives} /> : "";
     return (
       <div>
         <h1>Home</h1>
-        <p>The Home Page is accessible by every signed in user.</p>
-
-        { !!hives && <HiveList hives={hives} /> }
+        {hivesComponent}
       </div>
     );
   }
@@ -37,9 +37,6 @@ const ProjectList = ({ projects }) =>
 
 const HiveList = ({ hives }) =>
   <div>
-    <h2>List of Hives and Projects</h2>
-    <p>(Saved on Firebase Database)</p>
-
     {Object.keys(hives).map(key =>
       <div key={key}>
         <span>{hives[key].name}</span>
@@ -52,15 +49,13 @@ const HiveList = ({ hives }) =>
 
 const mapStateToProps = (state) => ({
   hives: state.hiveState.hives,
+  authUser: state.sessionState.authUser,
 });
 
 const mapDispatchToProps = (dispatch) => ({
   onSetHives: (hives) => dispatch({ type: 'HIVES_SET', hives }),
 });
 
-const authCondition = (authUser) => !!authUser;
-
 export default compose(
-  withAuthorization(authCondition),
   connect(mapStateToProps, mapDispatchToProps)
 )(HomePage);
