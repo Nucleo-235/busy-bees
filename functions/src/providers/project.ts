@@ -1,28 +1,66 @@
 // import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-export const calculateSummary = (projectId) => {
+export const getCachePath = (hive, project) => {
+  return `/parentCache/${hive}___${project}`;
+}
+
+export const cacheProjectParent = (hive, project, parentProjectPath) => {
+  const cachePath = getCachePath(hive, project);
+  if (parentProjectPath) {
+    return admin.database().ref(cachePath).set({ parentProjectPath, hive, project });
+  } else {
+    return new Promise(resolve => {
+      admin.database().ref(cachePath).remove().then(() => { resolve(true) }, () => { resolve(true) });
+    })
+  }
+};
+
+export const listProjects = (projectsKeys) : Promise<any[]> => {
+  const promises = [];
+  for (const keys of projectsKeys) {
+    promises.push(admin.database().ref(`/hives/${keys.hive}/projects/${keys.project}`).once('value'));
+  }
+  return promises.length === 0 ? Promise.resolve([]) : Promise.all(promises);
+};
+
+export const listSubProjects = (hiveId, projectId) : Promise<any[]> => {
   return new Promise((resolve, reject) => {
-    admin.database().ref(`/projects/${projectId}`).once('value').then(projectSnap => {
+    const parentPath = `/hives/${hiveId}/projects/${projectId}`;
+    admin.database().ref(`/parentCache`).orderByValue().equalTo(parentPath).once('value').then(subProjectsSnaps => {
+      const projectInfos = [];
+      subProjectsSnaps.forEach(subProjectSnap => {
+        const subProjectinfo = subProjectSnap.val();
+        if (subProjectinfo)
+          projectInfos.push(subProjectinfo)
+      });
+      listProjects(projectInfos).then(resolve, reject);
+    }, reject)
+  })
+};
+
+export const calculateSummary = (hiveId, projectId) => {
+  return new Promise((resolve, reject) => {
+    const projectPath = `/hives/${hiveId}/projects/${projectId}`;
+    admin.database().ref(projectPath).once('value').then(projectSnap => {
       const project = projectSnap.val();
       const participantsMap = project.participants || {};
       const promises = [];
-      promises.push(admin.database().ref(`/projects`).orderByChild('parentProject').equalTo(projectId).once('value').then(subProjectsSnaps => {
+      promises.push(listSubProjects(hiveId, projectId).then(subProjectsResults => {
         let sumHours = 0;
         let sumDifficulty = 0;
         let sumSpent = 0;
-        subProjectsSnaps.forEach(subProjectSnap => {
-          // const subProjectKey = subProjectSnap.key;
+        for (const subProjectSnap of subProjectsResults) {
           const subProject = subProjectSnap.val();
           if (subProject.summary) {
             sumHours += subProject.doneHours;
             sumDifficulty += subProject.doneDifficulty;
             sumSpent += subProject.amountSpent;
           }
-        });
+        };
         return { sumHours, sumDifficulty, sumSpent };
       }));
-      promises.push(admin.database().ref(`/executions`).orderByChild('project').equalTo(projectId).once('value').then(executionsSnaps => {
+      promises.push(admin.database().ref(`/hives/${hiveId}/executions`).orderByChild('project').equalTo(projectId).once('value').then(executionsSnaps => {
         let sumHours = 0;
         let sumDifficulty = 0;
         let sumSpent = 0;
@@ -30,7 +68,9 @@ export const calculateSummary = (projectId) => {
           // const executionKey = executionSnap.key;
           const execution = executionSnap.val();
           sumHours += execution.hours;
-          sumDifficulty += execution.difficulty;
+          if (execution.difficulty) {
+            sumDifficulty += execution.difficulty;
+          }
           const participant = participantsMap[execution.participant];
           if (participant) {
             sumSpent += (execution.hours * participant.hour_value);
@@ -58,10 +98,10 @@ export const calculateSummary = (projectId) => {
   });
 }
 
-export const updateSummary = (projectId) => {
+export const updateSummary = (hiveId, projectId) => {
   return new Promise((resolve, reject) => {
-    calculateSummary(projectId).then(baseSummary => {
-      admin.database().ref(`/projects/${projectId}/summary`).set(baseSummary).then(() => {
+    calculateSummary(hiveId, projectId).then(baseSummary => {
+      admin.database().ref(`/hives/${hiveId}/projects/${projectId}/summary`).set(baseSummary).then(() => {
           resolve(baseSummary);
       }, reject);
     }, reject);

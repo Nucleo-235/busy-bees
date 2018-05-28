@@ -2,11 +2,19 @@
   "rules": {
     ".read": true,
     ".write": true,
-    "projects": {
-      ".indexOn": ["parentProject"]
+    "hives": {
+      ".indexOn": ["name"],
+      "$hive": {
+        "projects": {
+          ".indexOn": ["parentProject"]
+        },
+        "executions": {
+          ".indexOn": ["project"]
+        }
+      }
     },
-    "executions": {
-      ".indexOn": ["project"]
+    "parentCache": {
+      ".indexOn": ".value"
     }
   }
 }
