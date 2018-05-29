@@ -19,6 +19,15 @@ export const doCreateUser = (id, username, email, displayName = null, photoURL =
   });
 }
 
+export const doCreateExecution = (hive, execution) => {
+  return new Promise((resolve, reject) => {
+    return db.ref(`hives/${hive}/executions`).push(execution).then((key) => {
+      resolve({ key: key, val: () => execution });
+    }, reject);
+  });
+  
+}
+
 export const onceGetHives = () => {
   const userId = auth.currentUser.uid;
   return new Promise((resolve, reject) => {
@@ -41,6 +50,33 @@ export const onceGetHives = () => {
         resolve([]);
       }
     }, reject);
+  })
+};
+
+export const onceGetParticipants = (hive, project) => {
+  return new Promise((resolve, reject) => {
+    db.ref(`hives/${hive}/projects/${project}/participants`).once('value').then(snapshot => {
+      resolve(snapshot.val());
+    }, reject);
+  })
+};
+
+export const firstProjectSummaryChange = (hive, project) => {
+  return new Promise((resolve, reject) => {
+    const timeoutValue = setTimeout(() => {
+      resolve(null);
+    }, 1500);
+    let loadedInitial = false;
+    var summaryRef = db.ref(`hives/${hive}/projects/${project}/summary`);
+    summaryRef.once('value').then(snapshot => {
+      loadedInitial = true;
+      summaryRef.on('value', function(snapshot) {
+        if (loadedInitial) {
+          clearTimeout(timeoutValue);
+          resolve(snapshot.val());
+        }
+      });
+    });
   })
 };
 

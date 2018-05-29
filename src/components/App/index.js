@@ -10,6 +10,7 @@ import SignInPage from '../SignIn';
 import PasswordForgetPage from '../PasswordForget';
 import HomePage from '../Home';
 import AccountPage from '../Account';
+import { ExecutionFormPage } from '../Execution';
 import withAuthentication from '../Session/withAuthentication';
 import * as routes from '../../constants/routes';
 
@@ -33,6 +34,7 @@ const App = () =>
         <Route exact path={routes.SIGN_IN} component={() => <SignInPage />} />
         <Route exact path={routes.PASSWORD_FORGET} component={() => <PasswordForgetPage />} />
         <Route exact path={routes.ACCOUNT} component={() => <AccountPage />} />
+        <Route exact path={routes.EXECUTION_FORM} component={() => <ExecutionFormPage />} />
       </Content>
       <Footer className="App-footer">&copy; Busy Bees</Footer>
     </Layout>

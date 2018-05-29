@@ -7,7 +7,7 @@ const applySetHives = (state, action) => ({
   hives: action.hives
 });
 
-function userReducer(state = INITIAL_STATE, action) {
+function hiveReducer(state = INITIAL_STATE, action) {
   switch(action.type) {
     case 'HIVES_SET' : {
       return applySetHives(state, action);
@@ -16,4 +16,4 @@ function userReducer(state = INITIAL_STATE, action) {
   }
 }
 
-export default userReducer;
+export default hiveReducer;

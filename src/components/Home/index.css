@@ -15,3 +15,7 @@
 .value-item .value {
   font-size: 24px;
 }
+.card-actions {
+  text-align: right;
+  margin-top: 10px;
+}

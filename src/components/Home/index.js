@@ -4,19 +4,22 @@ import { compose } from 'recompose';
 
 import { db } from '../../firebase';
 
+import { Link } from 'react-router-dom';
+import * as routes from '../../constants/routes';
+
 import { Row, Col, Card, Progress } from "antd";
 
 import './index.css';
 
 class HomePage extends Component {
-  componentDidUpdate() {
+  componentDidUpdate(prevProps, prevState, snapshot) {
     const { onSetHives, authUser } = this.props;
 
     if (authUser) {
       db.onceGetHivesWithProjects().then(snapshot =>
         onSetHives(snapshot)
       );
-    }
+    } 
   }
 
   render() {
@@ -51,41 +54,46 @@ const ValueItem = ({value, title}) =>
 const ProjectSummary = ({summary}) =>
   <div>
     { summary.difficultyProgress && <ProgressItem pct={summary.difficultyProgress} title={'Progresso'} /> }
-    { summary.spentProgress && <ProgressItem pct={summary.spentProgress} title={'Gasto'} /> }
-    { !summary.difficultyProgress && <ValueItem value={summary.amountSpent} title={'Gasto ($)'} /> }
+    { summary.spentProgress && <ProgressItem pct={summary.spentProgress} title={'Gasto $'} /> }
+    { !summary.difficultyProgress && <ValueItem value={summary.amountSpent} title={'Gasto $'} /> }
     { !summary.spentProgress && <ValueItem value={summary.doneHours} title={'Gasto (h)'} /> }
   </div>
 
-const ProjectItem = ({key, project}) => 
+const ProjectItem = ({ hive, projectKey, project}) => 
   <Card title={project.name}>
     { project.summary && <ProjectSummary summary={project.summary} /> }
+    <div class="card-actions">
+      <Link to={routes.EXECUTION_FORM.replace(':hive', hive).replace(':project', projectKey)}>Execução</Link>
+    </div>
   </Card>
 
-const ProjectList = ({ projects }) =>
+const ProjectList = ({ hive, projects }) =>
   <Row gutter={8}>
-    {Object.keys(projects).map(key =>
-      <Col key={key} span={6}>
-        <ProjectItem key={key} project={projects[key]} />
+    {Object.keys(projects).map(projectKey =>
+      <Col key={projectKey} span={6}>
+        <ProjectItem hive={hive} projectKey={projectKey} project={projects[projectKey]} />
       </Col>
     )}
   </Row>
 
 const HiveList = ({ hives }) =>
   <div>
-    {Object.keys(hives).map(key =>
-      <div key={key}>
-        <span>{hives[key].name}</span>
+    {Object.keys(hives).map(hiveKey =>
+      <div key={hiveKey}>
+        <span>{hives[hiveKey].name}</span>
         <div style={{ "paddingLeft": "10px" }}>
-          <ProjectList projects={hives[key].projects} />
+          <ProjectList hive={hiveKey} projects={hives[hiveKey].projects} />
         </div>
       </div>
     )}
   </div>
 
-const mapStateToProps = (state) => ({
-  hives: state.hiveState.hives,
-  authUser: state.sessionState.authUser,
-});
+const mapStateToProps = (state) => { 
+  return ({
+    hives: state.hiveState.hives,
+    authUser: state.sessionState.authUser,
+  })
+};
 
 const mapDispatchToProps = (dispatch) => ({
   onSetHives: (hives) => dispatch({ type: 'HIVES_SET', hives }),
