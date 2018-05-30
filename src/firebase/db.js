@@ -80,6 +80,10 @@ export const firstProjectSummaryChange = (hive, project) => {
   })
 };
 
+export const onceGetProjectSnapshot = (hive, project) => {
+  return db.ref(`hives/${hive}/projects/${project}`).once('value');
+};
+
 export const onceGetHivesWithProjects = () => {
   return new Promise((resolve, reject) => {
     onceGetHives().then(hives => {

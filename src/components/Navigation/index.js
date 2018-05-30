@@ -7,8 +7,8 @@ import * as routes from '../../constants/routes';
 
 import './index.css';
 
-const Navigation = ({ authUser }) =>
-  <div>
+const Navigation = ({ authUser, className }) =>
+  <div className={className}>
     { authUser
         ? <NavigationAuth />
         : <NavigationNonAuth />

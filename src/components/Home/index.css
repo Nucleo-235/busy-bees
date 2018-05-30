@@ -19,3 +19,10 @@
   text-align: right;
   margin-top: 10px;
 }
+.projectList {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.projectList .projectItem {
+  margin-bottom: 5px;
+}

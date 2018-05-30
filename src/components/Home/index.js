@@ -12,7 +12,13 @@ import { Row, Col, Card, Progress } from "antd";
 import './index.css';
 
 class HomePage extends Component {
-  componentDidUpdate(prevProps, prevState, snapshot) {
+  componentDidUpdate() {
+    this.loadHives();
+  }
+  componentDidMount() {
+    this.loadHives();
+  }
+  loadHives() {
     const { onSetHives, authUser } = this.props;
 
     if (authUser) {
@@ -62,7 +68,7 @@ const ProjectSummary = ({summary}) =>
 const ProjectItem = ({ hive, projectKey, project}) => 
   <Card title={project.name}>
     { project.summary && <ProjectSummary summary={project.summary} /> }
-    <div class="card-actions">
+    <div className={"card-actions"}>
       <Link to={routes.EXECUTION_FORM.replace(':hive', hive).replace(':project', projectKey)}>Execução</Link>
     </div>
   </Card>
@@ -70,7 +76,7 @@ const ProjectItem = ({ hive, projectKey, project}) =>
 const ProjectList = ({ hive, projects }) =>
   <Row gutter={8}>
     {Object.keys(projects).map(projectKey =>
-      <Col key={projectKey} span={6}>
+      <Col key={projectKey} md={{span: 6}} sm={{span: 12}} xs={{span: 24}} className={'projectItem'}>
         <ProjectItem hive={hive} projectKey={projectKey} project={projects[projectKey]} />
       </Col>
     )}
@@ -80,8 +86,8 @@ const HiveList = ({ hives }) =>
   <div>
     {Object.keys(hives).map(hiveKey =>
       <div key={hiveKey}>
-        <span>{hives[hiveKey].name}</span>
-        <div style={{ "paddingLeft": "10px" }}>
+        <h2>{hives[hiveKey].name}</h2>
+        <div className={'projectList'}>
           <ProjectList hive={hiveKey} projects={hives[hiveKey].projects} />
         </div>
       </div>

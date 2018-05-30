@@ -31,6 +31,7 @@ const INITIAL_STATE = {
   description: '',
   participant: null,
   participants: null,
+  projectModel: null,
   error: null,
 };
 
@@ -47,6 +48,16 @@ class ExecutionFormPage extends Component {
     }
     const hive = this.props.match.params.hive;
     const project = this.props.match.params.project;
+
+    db.onceGetProjectSnapshot(hive, project).then(projectSnap => {
+      const projectModel = projectSnap.val();
+      this.setState(() => ({ ...{
+        hive, project, 
+        key: this.props.match.params.key,
+        projectModel: projectModel,
+        participants: projectModel.participants, 
+      } }));
+    });
 
     db.onceGetParticipants(hive, project).then(participants => {
       this.setState(() => ({ ...{
@@ -128,6 +139,7 @@ class ExecutionFormPage extends Component {
       description,
       participant,
       participants,
+      projectModel,
       error,
     } = this.state;
 
@@ -138,7 +150,8 @@ class ExecutionFormPage extends Component {
 
     return (
       <div style={{ textAlign: "center", width: "100%" }}>
-        <h2>Nova Execução</h2>
+        { projectModel && <h2>{projectModel.name}</h2> }
+        <h3>Nova Execução</h3>
         <Form onSubmit={this.onSubmit} className="execution-form" style={{ textAlign: "left", maxWidth: "300px", display: "inline-block"}}>
           <FormItem>
             <DatePicker value={dateObj} 

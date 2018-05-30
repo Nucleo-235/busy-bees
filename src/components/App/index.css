@@ -4,8 +4,23 @@
   text-align: center;
 }
 
+.App-header {
+  width: 100%;
+}
 .App-header h1 {
+  float: left;
   color: whitesmoke;
+}
+.App-header .navigation {
+  float: right;
+  max-height: 100%;
+}
+.App-header .navigation ul {
+  margin-bottom: 0px;
+  max-height: 100%;
+}
+.App-header .navigation button {
+  line-height: 1.5em;
 }
 
 .App-content {

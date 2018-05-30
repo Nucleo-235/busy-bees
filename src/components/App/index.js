@@ -25,16 +25,15 @@ const App = () =>
     <Layout className="App">
       <Header className="App-header">
         <h1>Busy Bees</h1>
+        <Navigation className="navigation" />
       </Header>
       <Content className="App-content">
-        <Navigation />
-
-        <Route exact path={routes.HOME} component={() => <HomePage />} />
-        <Route exact path={routes.SIGN_UP} component={() => <SignUpPage />} />
-        <Route exact path={routes.SIGN_IN} component={() => <SignInPage />} />
-        <Route exact path={routes.PASSWORD_FORGET} component={() => <PasswordForgetPage />} />
-        <Route exact path={routes.ACCOUNT} component={() => <AccountPage />} />
-        <Route exact path={routes.EXECUTION_FORM} component={() => <ExecutionFormPage />} />
+            <Route exact path={routes.HOME} component={() => <HomePage />} />
+            <Route exact path={routes.SIGN_UP} component={() => <SignUpPage />} />
+            <Route exact path={routes.SIGN_IN} component={() => <SignInPage />} />
+            <Route exact path={routes.PASSWORD_FORGET} component={() => <PasswordForgetPage />} />
+            <Route exact path={routes.ACCOUNT} component={() => <AccountPage />} />
+            <Route exact path={routes.EXECUTION_FORM} component={() => <ExecutionFormPage />} />
       </Content>
       <Footer className="App-footer">&copy; Busy Bees</Footer>
     </Layout>
