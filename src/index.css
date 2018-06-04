@@ -3,3 +3,28 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
+
+.list {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.list .ant-card-head-title span:not(.right) {
+  margin-right: 5px;
+}
+.list .ant-card-head-title span.left {
+  float:left;
+}
+.list .ant-card-head-title span.right {
+  float:right;
+  margin-left: 5px;
+}
+.side-info > div {
+  display: inline-block;
+  margin-left: 15px;
+}
+.side-info > div > span:not(:last-child) {
+  margin-right: 5px;
+}
+.list .item {
+  margin-bottom: 5px;
+}

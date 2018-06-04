@@ -58,15 +58,6 @@ class ExecutionFormPage extends Component {
         participants: projectModel.participants, 
       } }));
     });
-
-    db.onceGetParticipants(hive, project).then(participants => {
-      this.setState(() => ({ ...{
-        hive, project, participants, key: this.props.match.params.key
-      } }));
-    }, error => {
-      this.props.history.push(routes.HOME);
-    })
-
   }
 
   onSubmit = (event) => {

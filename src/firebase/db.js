@@ -84,6 +84,10 @@ export const onceGetProjectSnapshot = (hive, project) => {
   return db.ref(`hives/${hive}/projects/${project}`).once('value');
 };
 
+export const onceGetProjectExecutionsSnapshot = (hive, project) => {
+  return db.ref(`/hives/${hive}/executions`).orderByChild('project').equalTo(project).once('value');
+};
+
 export const onceGetHivesWithProjects = () => {
   return new Promise((resolve, reject) => {
     onceGetHives().then(hives => {

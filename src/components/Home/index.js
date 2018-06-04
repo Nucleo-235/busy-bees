@@ -61,6 +61,9 @@ const ProjectSummary = ({summary}) =>
   <div>
     { summary.difficultyProgress && <ProgressItem pct={summary.difficultyProgress} title={'Progresso'} /> }
     { summary.spentProgress && <ProgressItem pct={summary.spentProgress} title={'Gasto $'} /> }
+    { summary.difficultyProgress > 0 && summary.spentProgress > 0 && 
+      <ProgressItem pct={summary.spentProgress / summary.difficultyProgress} title={'Uso'} /> 
+    }
     { !summary.difficultyProgress && <ValueItem value={summary.amountSpent} title={'Gasto $'} /> }
     { !summary.spentProgress && <ValueItem value={summary.doneHours} title={'Gasto (h)'} /> }
   </div>
@@ -68,7 +71,10 @@ const ProjectSummary = ({summary}) =>
 const ProjectItem = ({ hive, projectKey, project}) => 
   <Card title={project.name}>
     { project.summary && <ProjectSummary summary={project.summary} /> }
+    { !project.summary && project.price && <div> <ValueItem value={project.price} title={'Total $'} />
+    </div> }
     <div className={"card-actions"}>
+      <Link to={routes.EXECUTION_LIST.replace(':hive', hive).replace(':project', projectKey)}>Histórico</Link>
       <Link to={routes.EXECUTION_FORM.replace(':hive', hive).replace(':project', projectKey)}>Execução</Link>
     </div>
   </Card>
@@ -76,7 +82,7 @@ const ProjectItem = ({ hive, projectKey, project}) =>
 const ProjectList = ({ hive, projects }) =>
   <Row gutter={8}>
     {Object.keys(projects).map(projectKey =>
-      <Col key={projectKey} md={{span: 6}} sm={{span: 12}} xs={{span: 24}} className={'projectItem'}>
+      <Col key={projectKey} md={{span: 8}} sm={{span: 12}} xs={{span: 24}} className={'projectItem'}>
         <ProjectItem hive={hive} projectKey={projectKey} project={projects[projectKey]} />
       </Col>
     )}
