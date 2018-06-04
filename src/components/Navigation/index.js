@@ -18,6 +18,7 @@ const Navigation = ({ authUser, className }) =>
 const NavigationAuth = () =>
   <ul>
     <li><Link to={routes.HOME}>Home</Link></li>
+    <li><Link to={routes.EXECUTION_LIST}>Histórico</Link></li>
     <li><Link to={routes.ACCOUNT}>Account</Link></li>
     <li><SignOutButton /></li>
   </ul>

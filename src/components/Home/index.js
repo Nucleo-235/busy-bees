@@ -74,8 +74,8 @@ const ProjectItem = ({ hive, projectKey, project}) =>
     { !project.summary && project.price && <div> <ValueItem value={project.price} title={'Total $'} />
     </div> }
     <div className={"card-actions"}>
-      <Link to={routes.EXECUTION_LIST.replace(':hive', hive).replace(':project', projectKey)}>Histórico</Link>
-      <Link to={routes.EXECUTION_FORM.replace(':hive', hive).replace(':project', projectKey)}>Execução</Link>
+      <Link to={routes.PROJECT_EXECUTION_LIST.replace(':hive', hive).replace(':project', projectKey)}>Histórico</Link>
+      <Link to={routes.PROJECT_EXECUTION_FORM.replace(':hive', hive).replace(':project', projectKey)}>Execução</Link>
     </div>
   </Card>
 
