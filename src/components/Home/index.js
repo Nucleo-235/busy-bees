@@ -61,11 +61,10 @@ const ProjectSummary = ({summary}) =>
   <div>
     { summary.difficultyProgress && <ProgressItem pct={summary.difficultyProgress} title={'Progresso'} /> }
     { summary.spentProgress && <ProgressItem pct={summary.spentProgress} title={'Gasto $'} /> }
-    { summary.difficultyProgress > 0 && summary.spentProgress > 0 && 
-      <ProgressItem pct={summary.spentProgress / summary.difficultyProgress} title={'Uso'} /> 
-    }
-    { !summary.difficultyProgress && <ValueItem value={summary.amountSpent} title={'Gasto $'} /> }
-    { !summary.spentProgress && <ValueItem value={summary.doneHours} title={'Gasto (h)'} /> }
+    { !summary.difficultyProgress && !summary.amountSpentPending && <ValueItem value={summary.amountSpent} title={'Gasto $'} /> }
+    { !summary.difficultyProgress && summary.amountSpentPending &&<ValueItem value={summary.amountSpentPending} title={'Pendente $'} /> }
+    { !summary.spentProgress && !summary.doneHoursPending && <ValueItem value={summary.doneHours} title={'Gasto (h)'} /> }
+    { !summary.difficultyProgress && summary.doneHoursPending && <ValueItem value={summary.doneHoursPending} title={'Pendente $'} /> }
   </div>
 
 const ProjectItem = ({ hive, projectKey, project}) => 

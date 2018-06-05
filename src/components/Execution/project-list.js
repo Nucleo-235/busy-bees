@@ -52,7 +52,7 @@ class ProjectExecutionListPage extends Component {
 
     db.onceGetProjectExecutionsSnapshot(hive, project).then(executionsSnap => {
       this.setState(() => ({ ...{
-        executions: snapToArray(executionsSnap).sort((a, b) => a.date < b.date)
+        executions: snapToArray(executionsSnap).sort((a, b) => (b.dateValue || 0) - (a.dateValue || 0))
       } }));
     });
 

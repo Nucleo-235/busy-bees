@@ -11,6 +11,7 @@ admin.initializeApp(functions.config().firebase);
 // });
 
 import * as projectProvider from './providers/project';
+import * as executionProvider from './providers/execution';
 
 export const projectCreated = functions.database.ref('/hives/{hiveId}/projects/{projectId}').onCreate(event => {
   // const projectId = event.params.projectId;
@@ -49,13 +50,16 @@ export const projectSummaryWritten = functions.database.ref('/hives/{hiveId}/pro
 export const projectExecutionWritten = functions.database.ref('/hives/{hiveId}/executions/{executionId}').onWrite(event => {
   // const executionId = event.params.executionId;
   const hiveId = event.params.hiveId;
+  const executionId = event.params.executionId;
   const execution = event.data.val();
 
+  const promises = [];
+  promises.push(executionProvider.checkDate(hiveId, executionId, execution));
+
   if (execution && execution.project) {
-    return projectProvider.updateSummary(hiveId, execution.project);
-  } else {
-    return false;
+    promises.push(projectProvider.updateSummary(hiveId, execution.project));
   }
+  return Promise.all(promises);
 });
 
 const { firebaseAuthServer } = require('./default-server/firebase-auth-server');
@@ -73,6 +77,24 @@ httpPublicApp.get('/hives/:hiveId/projects/:id/summary', (req, res) => {
   } else {
     res.status(500).send({ error: "no project id" });
   }
+});
+
+httpPublicApp.get('/hives/:hiveId/executions/checkDates', (req, res) => {
+  const hiveId = req.params.hiveId;
+  admin.database().ref(`/hives/${hiveId}/executions`).once('value').then(executionsSnap => {
+    const promises = [];
+    executionsSnap.forEach(executionSnap => {
+      const execution = executionSnap.val();
+      promises.push(executionProvider.checkDate(hiveId, executionSnap.key, execution));
+    });
+    Promise.all(promises).then(results => {
+      res.status(200).send(results);
+    }, error => {
+      res.status(500).send({ error: error });
+    })
+  }, error => {
+    res.status(500).send({ error: error });
+  });
 });
 
 exports.publicApp = functions.https.onRequest(httpPublicApp);

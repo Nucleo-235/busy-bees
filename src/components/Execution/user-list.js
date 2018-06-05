@@ -22,7 +22,7 @@ class UserExecutionListPage extends Component {
   componentDidMount() {
     db.onceGetUserExecutionsMap().then(executions => {
       this.setState(() => ({ ...{
-        executions: mapToArray(executions).sort((a, b) => a.date < b.date)
+        executions: mapToArray(executions).sort((a, b) => (b.dateValue || 0) - (a.dateValue || 0))
       } }));
     });
 

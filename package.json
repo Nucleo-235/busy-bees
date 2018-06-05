@@ -5,10 +5,13 @@
   "dependencies": {
     "antd": "^3.5.4",
     "firebase": "^4.3.1",
+    "moment": "^2.22.2",
+    "moment-timezone": "^0.5.17",
     "prop-types": "^15.5.10",
     "react": "^16.1.1",
     "react-bootstrap": "^0.32.1",
     "react-dom": "^16.1.1",
+    "react-moment": "^0.7.0",
     "react-redux": "^5.0.6",
     "react-router-dom": "^4.2.2",
     "react-scripts": "1.0.17",
@@ -19,6 +22,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
+    "deploy": "firebase deploy --only hosting",
     "eject": "react-scripts eject"
   }
 }
