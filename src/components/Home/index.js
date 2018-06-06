@@ -41,13 +41,30 @@ class HomePage extends Component {
   }
 }
 
-const ProgressItem = ({pct, title}) =>
-  <div className="progress">
+const ProgressItemFormatted = ({pct, title, format, status}) => {
+  const percent = Math.round(pct*100);
+  return <div className="progress">
     <div className="">
-      <Progress type="circle" percent={Math.round(pct*100)} />
+      <Progress type="circle" percent={percent} format={format} status={status} />
     </div>
     <div span={24} className="title">{title}</div>
   </div>
+}
+const ProgressItem = ({pct, title}) => {
+  return <ProgressItemFormatted pct={pct} title={title} format={percent => percent + '%'} />
+}
+const ProgressItemInverse = ({pct, title}) => {
+  const actualPercent = Math.round(pct*100);
+  let format = percent => percent + '%';
+  let status = null;
+  if (pct === 1) {
+    format = () => <i class="anticon anticon-check"></i>;
+  } else if (pct > 1) {
+    format = () => actualPercent + '%';
+    status = "exception"
+  }
+  return <ProgressItemFormatted pct={pct} title={title} format={format} status={status} />
+}
 
 const ValueItem = ({value, title}) =>
   <div className="value-item">
@@ -60,7 +77,7 @@ const ValueItem = ({value, title}) =>
 const ProjectSummary = ({summary}) =>
   <div>
     { summary.difficultyProgress && <ProgressItem pct={summary.difficultyProgress} title={'Progresso'} /> }
-    { summary.spentProgress && <ProgressItem pct={summary.spentProgress} title={'Gasto $'} /> }
+    { summary.spentProgress && <ProgressItemInverse pct={summary.spentProgress} title={'Gasto $'} /> }
     { !summary.difficultyProgress && !summary.amountSpentPending && <ValueItem value={summary.amountSpent} title={'Gasto $'} /> }
     { !summary.difficultyProgress && summary.amountSpentPending &&<ValueItem value={summary.amountSpentPending} title={'Pendente $'} /> }
     { !summary.spentProgress && !summary.doneHoursPending && <ValueItem value={summary.doneHours} title={'Gasto (h)'} /> }
