@@ -121,15 +121,36 @@ export const updateSummary = (hiveId, projectId) => {
   });
 }
 
-export const checkDeadlineDate = (hiveId, projectKey, project) => {
+export const checkCalculatedValues = (hiveId, projectKey, project) => {
+  const newValues: any = {};
   if (project.deadline) {
     const deadlineDateValue = moment(project.deadline, "YYYY-MM-DD").valueOf();
-    if (!project.deadlineDateValue || project.deadlineDateValue != deadlineDateValue) {
+    if (!project.deadlineDateValue || project.deadlineDateValue !== deadlineDateValue) {
       project.deadlineDateValue = deadlineDateValue;
-      return admin.database().ref(`/hives/${hiveId}/projects/${projectKey}/deadlineDateValue`).set(project.deadlineDateValue).then(() => {
-        return Promise.resolve(Object.assign({}, project, { key: projectKey }));
-      });
+      newValues.deadlineDateValue = deadlineDateValue;
     }
   }
+  if (project.startAt) {
+    const startAtDateValue = moment(project.startAt, "YYYY-MM-DD").valueOf();
+    if (!project.startAtDateValue || project.startAtDateValue !== startAtDateValue) {
+      project.startAtDateValue = startAtDateValue;
+      newValues.startAtDateValue = startAtDateValue;
+    }
+  }
+
+  if (project.deadlineDateValue && project.startAtDateValue) {
+    const deadlineDaysPeriod = Math.ceil(moment(project.deadlineDateValue).diff(moment(project.startAtDateValue), 'days', true));
+    if (!project.deadlineDaysPeriod || project.deadlineDaysPeriod !== deadlineDaysPeriod) {
+      project.deadlineDaysPeriod = deadlineDaysPeriod;
+      newValues.deadlineDaysPeriod = deadlineDaysPeriod;
+    }
+  }
+
+  if (Object.keys(newValues).length > 0) {
+    return admin.database().ref(`/hives/${hiveId}/projects/${projectKey}`).update(newValues).then(() => {
+      return Promise.resolve(Object.assign({}, project, { key: projectKey }));
+    });
+  }
+  
   return Promise.resolve(Object.assign({}, project, { key: projectKey }));
 };

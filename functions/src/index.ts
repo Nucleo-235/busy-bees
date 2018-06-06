@@ -23,7 +23,7 @@ export const projectWritten = functions.database.ref('/hives/{hiveId}/projects/{
   const hiveId = event.params.hiveId;
   const projectId = event.params.projectId;
   const project = event.data.val();
-  return projectProvider.checkDeadlineDate(hiveId, projectId, project);
+  return projectProvider.checkCalculatedValues(hiveId, projectId, project);
 });
 
 export const projectParentChanged = functions.database.ref('/hives/{hiveId}/projects/{projectId}/parentProject').onWrite(event => {
