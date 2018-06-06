@@ -39,6 +39,18 @@ export const listSubProjects = (hiveId, projectId) : Promise<any[]> => {
   })
 };
 
+const getExecutionPrice = (execution, participant) => {
+  if (execution.price) {
+    return execution.price;
+  } else if (execution.custom_hour_value) {
+    return execution.hours * execution.custom_hour_value;
+  } else if (participant) {
+    return execution.hours * participant.hour_value;
+  } else {
+    return null;
+  }
+}
+
 export const calculateSummary = (hiveId, projectId) => {
   return new Promise((resolve, reject) => {
     const projectPath = `/hives/${hiveId}/projects/${projectId}`;
@@ -71,9 +83,9 @@ export const calculateSummary = (hiveId, projectId) => {
           if (execution.difficulty) {
             sumDifficulty += execution.difficulty;
           }
-          const participant = participantsMap[execution.participant];
-          if (participant) {
-            sumSpent += (execution.hours * participant.hour_value);
+          const spent = getExecutionPrice(execution, participantsMap[execution.participant]);
+          if (spent) {
+            sumSpent += spent;
           }
         });
         return { sumHours, sumDifficulty, sumSpent };
