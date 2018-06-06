@@ -1,5 +1,6 @@
 // import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import * as moment from 'moment';
 
 export const getCachePath = (hive, project) => {
   return `/parentCache/${hive}___${project}`;
@@ -119,3 +120,16 @@ export const updateSummary = (hiveId, projectId) => {
     }, reject);
   });
 }
+
+export const checkDeadlineDate = (hiveId, projectKey, project) => {
+  if (project.deadline) {
+    const deadlineDateValue = moment(project.deadline, "YYYY-MM-DD").valueOf();
+    if (!project.deadlineDateValue || project.deadlineDateValue != deadlineDateValue) {
+      project.deadlineDateValue = deadlineDateValue;
+      return admin.database().ref(`/hives/${hiveId}/projects/${projectKey}/deadlineDateValue`).set(project.deadlineDateValue).then(() => {
+        return Promise.resolve(Object.assign({}, project, { key: projectKey }));
+      });
+    }
+  }
+  return Promise.resolve(Object.assign({}, project, { key: projectKey }));
+};
