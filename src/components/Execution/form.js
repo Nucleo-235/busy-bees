@@ -3,6 +3,8 @@ import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withRouter } from 'react-router-dom';
 
+import * as moment from 'moment';
+
 // import { Link } from 'react-router-dom';
 
 import * as routes from '../../constants/routes';
@@ -15,18 +17,17 @@ const Option = Select.Option;
 const { TextArea } = Input;
 const FormItem = Form.Item;
 
+const DefaultDatePrettyFormat = "YYYY-MM-DD";
+const DefaultDateDBFormat = "YYYY-MM-DD";
+
 const updateByPropertyName = (propertyName, value) => () => ({
   [propertyName]: value,
-});
-const updateNumberByPropertyName = (propertyName, value) => () => ({
-  [propertyName]: isNaN(Number(value)) ? null : Number(value),
 });
 
 const INITIAL_STATE = {
   key: null,
   hours: null,
-  date: null,
-  dateStr: null,
+  date: moment().startOf('day'),
   difficulty: null,
   description: '',
   participant: null,
@@ -38,7 +39,9 @@ const INITIAL_STATE = {
 class ExecutionFormPage extends Component {
   constructor(props) {
     super(props);
-    this.state = { ...INITIAL_STATE };
+    this.state = { ...INITIAL_STATE, 
+      date: moment().startOf('day'),
+    }
   }
 
   componentDidMount() {
@@ -51,11 +54,14 @@ class ExecutionFormPage extends Component {
 
     db.onceGetProjectSnapshot(hive, project).then(projectSnap => {
       const projectModel = projectSnap.val();
+      const participantKeys = projectModel.participants ? Object.keys(projectModel.participants) : [];
+      const participant = (participantKeys.length === 1 ? participantKeys[0] : null) || this.state.participant;
       this.setState(() => ({ ...{
         hive, project, 
         key: this.props.match.params.key,
         projectModel: projectModel,
         participants: projectModel.participants, 
+        participant
       } }));
     });
   }
@@ -77,7 +83,7 @@ class ExecutionFormPage extends Component {
 
     const execution = {
       hours,
-      date,
+      date: date.format(DefaultDateDBFormat),
       participant,
       project,
     }
@@ -110,9 +116,9 @@ class ExecutionFormPage extends Component {
     event.preventDefault();
   }
 
-  renderParticipantsSelect(participants) {
+  renderParticipantsSelect(participants, participant) {
     if (participants)
-      return <Select onChange={value => this.setState(updateByPropertyName('participant', value))}>
+      return <Select defaultValue={participant} onChange={value => this.setState(updateByPropertyName('participant', value))}>
         {Object.keys(participants).map(key =>
           <Option key={key} value={key}>{participants[key].name || key}</Option>
         )}
@@ -125,7 +131,6 @@ class ExecutionFormPage extends Component {
     const {
       hours,
       difficulty,
-      dateObj,
       date,
       description,
       participant,
@@ -145,18 +150,15 @@ class ExecutionFormPage extends Component {
         <h3>Nova Execução</h3>
         <Form onSubmit={this.onSubmit} className="execution-form" style={{ textAlign: "left", maxWidth: "300px", display: "inline-block"}}>
           <FormItem>
-            <DatePicker value={dateObj} 
-              onChange={(value, valueStr) => { 
-                this.setState(updateByPropertyName('dateObj', value));
-                this.setState(updateByPropertyName('date', valueStr));
-              }}
+            <DatePicker defaultValue={moment().startOf('day')} value={date} format={DefaultDatePrettyFormat}
+              onChange={value => this.setState(updateByPropertyName('date', value))}
             />
           </FormItem>
           <FormItem>
             <InputNumber
               value={hours}
               min={0} step={0.01}
-              onChange={value => this.setState(updateNumberByPropertyName('hours', value))}
+              onChange={value => this.setState(updateByPropertyName('hours', value))}
               placeholder="Horas"
               required
             />
@@ -165,13 +167,13 @@ class ExecutionFormPage extends Component {
             <InputNumber
               value={difficulty}
               min={0} step={0.01}
-              onChange={value => this.setState(updateNumberByPropertyName('difficulty', value))}
+              onChange={value => this.setState(updateByPropertyName('difficulty', value))}
               placeholder="Dificuldade"
             />
           </FormItem>
 
           <FormItem>
-            {this.renderParticipantsSelect(participants)}
+            {this.renderParticipantsSelect(participants, participant)}
           </FormItem>
 
           <TextArea
