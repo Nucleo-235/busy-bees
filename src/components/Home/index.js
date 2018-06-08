@@ -134,7 +134,7 @@ const groupProjectByType = (projectList, getGroupCallback) => {
 }
 
 const ProjectList = ({ hive, projects }) => {
-  const sortedProjects = projects.sort((a, b) => (b.deadlineDateValue || 0) - (a.deadlineDateValue || 0))
+  const sortedProjects = projects.sort((a, b) => (a.deadlineDateValue || 0) - (b.deadlineDateValue || 0))
   const projectGroups = groupProjectByType(sortedProjects, project => {
     const group = { projects: [] };
     group.index = project.finished ? 2 : 0;
