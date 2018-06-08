@@ -134,24 +134,26 @@ const groupProjectByType = (projectList, getGroupCallback) => {
 }
 
 const ProjectList = ({ hive, projects }) => {
-  const sortedProjects = projects.sort((a, b) => (a.deadlineDateValue || 0) - (b.deadlineDateValue || 0))
-  const projectGroups = groupProjectByType(sortedProjects, project => {
+  const projectGroups = groupProjectByType(projects, project => {
     const group = { projects: [] };
     group.index = project.finished ? 2 : 0;
     group.name = project.finished ? 'Finalizados' : 'Em Aberto';
     group.name += project.deadline ? ' - com Prazo' : ' - sem Prazo';
+    group.sortingCB = (a, b) => (a.deadlineDateValue || 0) - (b.deadlineDateValue || 0);
     if (!project.deadline) {
       group.index += 1;
+      group.sortingCB = (a, b) => a.name - b.name;
     }
+    
     return group;
-  })
+  });
   
   return <div>
     {projectGroups.map(groupProject =>
       <div>
         <h3>{groupProject.name}</h3>
         <Row key={groupProject.name} gutter={8}>
-          {groupProject.projects.map(project =>
+          {groupProject.projects.sort(groupProject.sortingCB).map(project =>
             <Col key={project.key} md={{span: 8}} sm={{span: 12}} xs={{span: 24}} className={'projectItem'}>
               <ProjectItem hive={hive} projectKey={project.key} project={project} />
             </Col>
