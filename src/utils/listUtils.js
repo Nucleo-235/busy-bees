@@ -11,11 +11,11 @@ export const snapToArray = snap => {
 }
 
 export const mapToArray = map => {
-  return Object.keys(map).map(key => {
+  return map ? Object.keys(map).map(key => {
     const item = map[key];
     if (item && !item.key) {
       item.key = key;
     }
     return item;
-  })
+  }) : [];
 }

@@ -88,28 +88,13 @@ export const onceGetProjectExecutionsSnapshot = (hive, project) => {
   return db.ref(`/hives/${hive}/executions`).orderByChild('project').equalTo(project).once('value');
 };
 
-export const onceGetUserExecutionsMap = () => {
+export const onceGetUserExecutionsMap = (range = null) => {
   const userId = auth.currentUser.uid;
-  return new Promise((resolve, reject) => {
-    db.ref(`users/${userId}`).once('value').then(userSnap => {
-      const user = userSnap.val();
-      const promises = Object.keys(user.hives).map(hive => {
-        return db.ref(`hives/${hive}/executions`).orderByChild('participant').equalTo(user.username).once('value');
-      });
-      if (promises.length > 0) {
-        Promise.all(promises).then(finalResults => {
-          let resultMap = {};
-          finalResults.forEach(element => {
-            resultMap = Object.assign(resultMap, element.val());
-          });
-          resolve(resultMap);
-          return resultMap;
-        }, reject);
-      } else {
-        resolve([]);
-      }
-    }, reject);
-  })
+  if (range) {
+    return db.ref(`userSchedule/${userId}`).orderByChild("dateValue").startAt(range.start).endAt(range.end).once('value').then(scheduleValues => scheduleValues.val());
+  } else {
+    return db.ref(`userSchedule/${userId}`).once('value').then(scheduleValues => scheduleValues.val());
+  }
 };
 
 export const onceGetHivesWithProjects = () => {

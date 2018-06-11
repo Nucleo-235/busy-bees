@@ -2,9 +2,18 @@ import * as admin from 'firebase-admin';
 import * as moment from 'moment';
 
 const doExecutionToSchedule = (hiveId, executionKey, execution, user) => {
-  const scheduleItem = Object.assign({}, execution);
+  const scheduleItem = Object.assign({ hive: hiveId }, execution);
   delete scheduleItem.participant;
-  return admin.database().ref(`/userSchedule/${user.key}/${executionKey}`).update(scheduleItem).then(() => scheduleItem);
+  if (scheduleItem.project) {
+    return admin.database().ref(`/hives/${hiveId}/projects/${scheduleItem.project}`).once('value').then(projectSnap => {
+      if (projectSnap.exists()) {
+        scheduleItem.projectName = projectSnap.val().name;
+      }
+      return admin.database().ref(`/userSchedule/${user.key}/${executionKey}`).update(scheduleItem).then(() => scheduleItem);
+    })
+  } else {
+    return admin.database().ref(`/userSchedule/${user.key}/${executionKey}`).update(scheduleItem).then(() => scheduleItem);
+  }
 };
 
 const getUserByUsername = participant => {

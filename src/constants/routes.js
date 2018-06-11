@@ -5,4 +5,6 @@ export const PASSWORD_FORGET = '/pw-forget';
 export const ACCOUNT = '/account';
 export const PROJECT_EXECUTION_LIST = '/h/:hive/:project/executions';
 export const PROJECT_EXECUTION_FORM = '/h/:hive/:project/execution';
+export const EMPTY_EXECUTION_FORM = '/new-execution';
 export const EXECUTION_LIST = '/executions';
+export const EXECUTION_CALENDAR = '/calendar';
