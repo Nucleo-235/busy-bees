@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { withRouter } from 'react-router-dom';
+import { withRouter, Link } from 'react-router-dom';
 
 import * as moment from 'moment';
 
 import { db } from '../../firebase';
 import withAuthorization from '../Session/withAuthorization';
-// import * as routes from '../../constants/routes';
+import * as routes from '../../constants/routes';
 
-import { Calendar } from 'antd';
+import { Calendar, Popover } from 'antd';
 import { mapToArray } from '../../utils/listUtils';
 
 const INITIAL_STATE = {
@@ -41,8 +41,9 @@ class UserExecutionCalendarPage extends Component {
         const item = map[execution.project];
         item.hours = (item.hours || 0) + execution.hours || 0;
         item.difficulty = (item.difficulty || 0) + execution.difficulty || 0;
+        item.children.push(executions);
       } else {
-        const item = Object.assign({}, execution);
+        const item = Object.assign({ children: [execution] }, execution);
         map[item.project] = item;
         list.push(item);
       }
@@ -65,8 +66,10 @@ class UserExecutionCalendarPage extends Component {
         { total > 0 && <li><strong>Total: {total}</strong></li> }
         {
           listData.map(item => (
-            <li key={item.key}>
-              <span>({item.hours}) {item.projectName || item.project}</span>
+            <li key={item.key} style={{ marginLeft: "0px" }}>
+              <Popover content={this.renderDetails(value, listData, total)} title={value.format('YYYY-MM-DD')} trigger="click">
+                <span>({item.hours}) {item.projectName || item.project}</span>
+              </Popover>
             </li>
           ))
         }
@@ -101,13 +104,38 @@ class UserExecutionCalendarPage extends Component {
     });
   }
 
-  dateSelected(date) {
-    // const newFormPath = routes.EMPTY_EXECUTION_FORM + '?date=' + date.format("YYYY-MM-DD");
-    // this.props.history.push(newFormPath);
+  dateSelected(value) {
+    const { executions, } = this.state;
+    const start = value.startOf('day').valueOf();
+    const end = value.endOf('day').valueOf();
+    const listData = this.summarizeProjectData(this.filterData(executions, start, end));
+    this.setState(() => ({ ...{
+      selectedDate: value,
+      selectedList: listData,
+      detailsVisible: true
+    } }));
+  }
+
+  renderDetails(date, listData, total) {
+    return <ul className="events">
+      { total > 0 && <li style={{ textAlign: "center", marginBottom: "15px", display: "block" }}><strong>Total: {total}</strong></li> }
+      { listData && listData.map(item => (
+          <li key={item.key} style={{ display: "block", marginBottom: "10px", marginLeft: "0px", padding: "5px" }}>
+            <div>
+              <h4 style={{ marginBottom: "2px" }}>({item.hours}) {item.projectName || item.project}</h4>
+              <div className={"card-actions"} style={{ marginTop: "0px" }}>
+                <Link to={routes.PROJECT_EXECUTION_LIST.replace(':hive', item.hive).replace(':project', item.project)}>Histórico</Link>
+                <Link to={routes.PROJECT_EXECUTION_FORM.replace(':hive', item.hive).replace(':project', item.project)}>Execução</Link>
+              </div>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
   }
 
   render() {
-    const { executions, } = this.state;
+    const { executions } = this.state;
 
     return (
       <div style={{ textAlign: "center", width: "100%" }}>
