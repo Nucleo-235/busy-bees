@@ -8,9 +8,9 @@ export const checkDate = (hiveId, executionKey, execution) => {
     if (!execution.dateValue || execution.dateValue !== dateValue) {
       execution.dateValue = dateValue;
       return admin.database().ref(`/hives/${hiveId}/executions/${executionKey}/dateValue`).set(execution.dateValue).then(() => {
-        return Promise.resolve(Object.assign({}, execution, { key: executionKey }));
+        return Promise.resolve(execution);
       });
     }
   }
-  return Promise.resolve(Object.assign({}, execution, { key: executionKey }));
+  return Promise.resolve(execution);
 };

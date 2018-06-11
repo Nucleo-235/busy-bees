@@ -12,6 +12,7 @@ admin.initializeApp(functions.config().firebase);
 
 import * as projectProvider from './providers/project';
 import * as executionProvider from './providers/execution';
+import * as scheduleProvider from './providers/schedule';
 
 export const projectCreated = functions.database.ref('/hives/{hiveId}/projects/{projectId}').onCreate(event => {
   // const projectId = event.params.projectId;
@@ -62,6 +63,7 @@ export const projectExecutionWritten = functions.database.ref('/hives/{hiveId}/e
 
   const promises = [];
   promises.push(executionProvider.checkDate(hiveId, executionId, execution));
+  promises.push(scheduleProvider.executionToSchedule(hiveId, executionId, execution));
 
   if (execution && execution.project) {
     promises.push(projectProvider.updateSummary(hiveId, execution.project));
@@ -99,6 +101,15 @@ httpPublicApp.get('/hives/:hiveId/executions/checkDates', (req, res) => {
     }, error => {
       res.status(500).send({ error: error });
     })
+  }, error => {
+    res.status(500).send({ error: error });
+  });
+});
+
+httpPublicApp.get('/hives/:hiveId/schedules/rebuild', (req, res) => {
+  const hiveId = req.params.hiveId;
+  scheduleProvider.executionsToSchedules(hiveId).then(results => {
+    res.status(200).send(results);
   }, error => {
     res.status(500).send({ error: error });
   });

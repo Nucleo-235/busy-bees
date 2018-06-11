@@ -2,6 +2,9 @@
   "rules": {
     ".read": true,
     ".write": true,
+    "users": {
+      ".indexOn": ["username"]
+    },
     "hives": {
       ".indexOn": ["name"],
       "$hive": {
