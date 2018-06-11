@@ -40,6 +40,29 @@ export const listSubProjects = (hiveId, projectId) : Promise<any[]> => {
   })
 };
 
+export interface ISummaryStatus {
+  difficulty: number;
+  hours: number;
+  spent: number;
+}
+
+export class SummaryStatus implements ISummaryStatus{
+  difficulty: number = 0;
+  hours: number = 0;
+  spent: number = 0;
+}
+
+export class Summary {
+  done: SummaryStatus = new SummaryStatus();
+  planned: SummaryStatus = new SummaryStatus;
+  total: SummaryStatus = new SummaryStatus;
+
+  todoDifficulty: number = 0;
+  difficultyProgress: number = 0;
+  availableAmount: number = 0;
+  spentProgress: number = 0;
+}
+
 const getExecutionPrice = (execution, participant) => {
   if (execution.price) {
     return execution.price;
@@ -48,9 +71,23 @@ const getExecutionPrice = (execution, participant) => {
   } else if (participant) {
     return execution.hours * participant.hour_value;
   } else {
-    return null;
+    return 0;
   }
 }
+
+const newSummary = () : Summary => new Summary();
+
+const increaseSummaryStatus = (summaryStatus: SummaryStatus, newData : ISummaryStatus) => {
+  summaryStatus.hours += newData.hours || 0;
+  summaryStatus.difficulty += newData.difficulty || 0;
+  summaryStatus.spent += newData.spent || 0;
+};
+
+const increaseSummaryStatuses = (summaryStatuses: Summary, newData: Summary) => {
+  increaseSummaryStatus(summaryStatuses.done, newData.done);
+  increaseSummaryStatus(summaryStatuses.planned, newData.planned);
+  increaseSummaryStatus(summaryStatuses.total, newData.total);
+};
 
 export const calculateSummary = (hiveId, projectId) => {
   return new Promise((resolve, reject) => {
@@ -59,51 +96,42 @@ export const calculateSummary = (hiveId, projectId) => {
       const project = projectSnap.val();
       const participantsMap = project.participants || {};
       const promises = [];
+      const todayEnd = moment().endOf('day').valueOf();
       promises.push(listSubProjects(hiveId, projectId).then(subProjectsResults => {
-        let sumHours = 0;
-        let sumDifficulty = 0;
-        let sumSpent = 0;
+        let subSummary = newSummary();
+        
         for (const subProjectSnap of subProjectsResults) {
           const subProject = subProjectSnap.val();
           if (subProject.summary) {
-            sumHours += subProject.doneHours;
-            sumDifficulty += subProject.doneDifficulty;
-            sumSpent += subProject.amountSpent;
+            increaseSummaryStatuses(subSummary, subProject.summary);
           }
         };
-        return { sumHours, sumDifficulty, sumSpent };
+        return subSummary;
       }));
       promises.push(admin.database().ref(`/hives/${hiveId}/executions`).orderByChild('project').equalTo(projectId).once('value').then(executionsSnaps => {
-        let sumHours = 0;
-        let sumDifficulty = 0;
-        let sumSpent = 0;
+        let executionsSummary = newSummary();
+
         executionsSnaps.forEach(executionSnap => {
           // const executionKey = executionSnap.key;
           const execution = executionSnap.val();
-          sumHours += execution.hours;
-          if (execution.difficulty) {
-            sumDifficulty += execution.difficulty;
-          }
-          const spent = getExecutionPrice(execution, participantsMap[execution.participant]);
-          if (spent) {
-            sumSpent += spent;
-          }
+          const statusSummary = execution.dateValue && execution.dateValue > todayEnd ? executionsSummary.planned : executionsSummary.done;
+          execution.spent = getExecutionPrice(execution, participantsMap[execution.participant]);
+          increaseSummaryStatus(statusSummary, execution);
+          increaseSummaryStatus(executionsSummary.total, execution);
         });
-        return { sumHours, sumDifficulty, sumSpent };
+        return executionsSummary;
       }));
       Promise.all(promises).then(results => {
-        const baseSummary: any = {
-          doneHours: (results[0].sumHours + results[1].sumHours),
-          doneDifficulty: (results[0].sumDifficulty + results[1].sumDifficulty),
-          amountSpent: (results[0].sumSpent + results[1].sumSpent),
-        };
+        let baseSummary = newSummary();
+        increaseSummaryStatuses(baseSummary, results[0]);
+        increaseSummaryStatuses(baseSummary, results[1]);
         if (project.totalDifficulty && project.totalDifficulty > 0) {
-          baseSummary.todoDifficulty = Math.max(project.totalDifficulty - baseSummary.doneDifficulty, 0);
-          baseSummary.difficultyProgress = Math.min(baseSummary.doneDifficulty / project.totalDifficulty, 1);
+          baseSummary.todoDifficulty = Math.max(project.totalDifficulty - baseSummary.done.difficulty, 0);
+          baseSummary.difficultyProgress = Math.min(baseSummary.done.difficulty / project.totalDifficulty, 1);
         }
         if (project.price && project.price > 0) {
-          baseSummary.availableAmount = Math.max(project.price - baseSummary.amountSpent, 0);
-          baseSummary.spentProgress = Math.min(baseSummary.amountSpent / project.price, 1);
+          baseSummary.availableAmount = Math.max(project.price - baseSummary.done.spent, 0);
+          baseSummary.spentProgress = Math.min(baseSummary.done.spent / project.price, 1);
         }
         resolve(baseSummary);
       }, reject);
@@ -117,6 +145,22 @@ export const updateSummary = (hiveId, projectId) => {
       admin.database().ref(`/hives/${hiveId}/projects/${projectId}/summary`).set(baseSummary).then(() => {
           resolve(baseSummary);
       }, reject);
+    }, reject);
+  });
+}
+
+export const updateAllSummaries = () => {
+  return new Promise((resolve, reject) => {
+    admin.database().ref(`/hives`).once('value').then((hives) => {
+      const promises = [];
+      hives.forEach(hiveSnap => {
+        const hiveId = hiveSnap.key;
+        const hive = hiveSnap.val();
+        if (hive.projects) {
+          Array.prototype.push(promises, Object.keys(hive.projects).map(projectId => updateSummary(hiveId, projectId)));
+        }
+      });
+      return promises.length === 0 ? resolve([]) : Promise.all(promises).then(resolve, reject);
     }, reject);
   });
 }

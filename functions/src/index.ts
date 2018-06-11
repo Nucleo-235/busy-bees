@@ -115,5 +115,13 @@ httpPublicApp.get('/hives/:hiveId/schedules/rebuild', (req, res) => {
   });
 });
 
+httpPublicApp.get('/cron/rebuild/summary', (req, res) => {
+  projectProvider.updateAllSummaries().then(summary => {
+    res.status(200).send(summary);
+  }, error => {
+    res.status(500).send({ error: error });
+  });
+});
+
 exports.publicApp = functions.https.onRequest(httpPublicApp);
 

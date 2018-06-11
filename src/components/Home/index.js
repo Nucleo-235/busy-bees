@@ -99,10 +99,8 @@ const ProjectSummary = ({project, summary}) => {
     { deadlineInfo }
     { project.totalDifficulty && <ProgressItem pct={summary.difficultyProgress || 0} title={'Escopo'} /> }
     { project.price && <ProgressItemInverse pct={summary.spentProgress || 0} title={'Gasto $'} /> }
-    { !project.price && !summary.amountSpentPending && <ValueItem value={summary.amountSpent} title={'Gasto $'} /> }
-    { !project.price && summary.amountSpentPending &&<ValueItem value={summary.amountSpentPending} title={'Pendente $'} /> }
-    { !project.totalDifficulty && !summary.doneHoursPending && <ValueItem value={summary.doneHours} title={'Gasto (h)'} /> }
-    { !project.totalDifficulty && summary.doneHoursPending && <ValueItem value={summary.doneHoursPending} title={'Pendente $'} /> }
+    { !project.price && <ValueItem value={summary.done.spent} title={'Gasto $'} /> }
+    { !project.totalDifficulty && <ValueItem value={summary.done.hours} title={'Gasto (h)'} /> }
   </div>
 }
 
