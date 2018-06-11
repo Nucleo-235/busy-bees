@@ -98,7 +98,7 @@ export const calculateSummary = (hiveId, projectId) => {
       const promises = [];
       const todayEnd = moment().endOf('day').valueOf();
       promises.push(listSubProjects(hiveId, projectId).then(subProjectsResults => {
-        let subSummary = newSummary();
+        const subSummary = newSummary();
         
         for (const subProjectSnap of subProjectsResults) {
           const subProject = subProjectSnap.val();
@@ -109,7 +109,7 @@ export const calculateSummary = (hiveId, projectId) => {
         return subSummary;
       }));
       promises.push(admin.database().ref(`/hives/${hiveId}/executions`).orderByChild('project').equalTo(projectId).once('value').then(executionsSnaps => {
-        let executionsSummary = newSummary();
+        const executionsSummary = newSummary();
 
         executionsSnaps.forEach(executionSnap => {
           // const executionKey = executionSnap.key;
@@ -122,7 +122,7 @@ export const calculateSummary = (hiveId, projectId) => {
         return executionsSummary;
       }));
       Promise.all(promises).then(results => {
-        let baseSummary = newSummary();
+        const baseSummary = newSummary();
         increaseSummaryStatuses(baseSummary, results[0]);
         increaseSummaryStatuses(baseSummary, results[1]);
         if (project.totalDifficulty && project.totalDifficulty > 0) {

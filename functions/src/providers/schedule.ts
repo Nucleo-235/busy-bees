@@ -1,5 +1,4 @@
 import * as admin from 'firebase-admin';
-import * as moment from 'moment';
 
 const doExecutionToSchedule = (hiveId, executionKey, execution, user) => {
   const scheduleItem = Object.assign({ hive: hiveId }, execution);
@@ -46,12 +45,12 @@ export const executionToSchedule = (hiveId, executionKey, execution) => {
 
 export const executionsToSchedules = (hiveId) => {
   return admin.database().ref(`/hives/${hiveId}/executions`).once('value').then(executionsSnaps => {
-    var participantExecutionsMap = { };
+    const participantExecutionsMap = { };
     executionsSnaps.forEach(executionSnap => {
       const execution = executionSnap.val();
       const key = executionSnap.key;
       if (execution.participant) {
-        var executionList = participantExecutionsMap[execution.participant];
+        const executionList = participantExecutionsMap[execution.participant];
         if (executionList) {
           executionList.push({ key, execution });
         } else {
