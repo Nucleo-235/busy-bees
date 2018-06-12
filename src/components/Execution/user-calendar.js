@@ -12,6 +12,8 @@ import * as routes from '../../constants/routes';
 import { Calendar, Popover } from 'antd';
 import { mapToArray } from '../../utils/listUtils';
 
+import './user-calendar.css';
+
 const INITIAL_STATE = {
   executions: null,
 };
@@ -23,8 +25,8 @@ class UserExecutionCalendarPage extends Component {
   }
 
   componentDidMount() {
-    const start = moment().startOf('month').valueOf();
-    const end = moment().endOf('month').valueOf() + 1;
+    const start = moment().utc().startOf('month').valueOf();
+    const end = moment().utc().endOf('month').valueOf() + 1;
 
     db.onceGetUserExecutionsMap({ start, end}).then(executions => {
       this.setState(() => ({ ...{
@@ -41,9 +43,9 @@ class UserExecutionCalendarPage extends Component {
         const item = map[execution.project];
         item.hours = (item.hours || 0) + execution.hours || 0;
         item.difficulty = (item.difficulty || 0) + execution.difficulty || 0;
-        item.children.push(executions);
+        item.children.push(execution);
       } else {
-        const item = Object.assign({ children: [execution] }, execution);
+        const item = Object.assign({ }, execution, { children: [execution] });
         map[item.project] = item;
         list.push(item);
       }
@@ -57,16 +59,16 @@ class UserExecutionCalendarPage extends Component {
 
   dateCellRender(value) {
     const { executions, } = this.state;
-    const start = value.startOf('day').valueOf();
-    const end = value.endOf('day').valueOf();
+    const start = value.utc().startOf('day').valueOf();
+    const end = value.utc().endOf('day').valueOf();
     const listData = this.summarizeProjectData(this.filterData(executions, start, end));
     const total = listData.reduce((x, y) => x + (y.hours || 0), 0)
     return (
-      <ul className="events">
-        { total > 0 && <li><strong>Total: {total}</strong></li> }
+      <ul className="calendar-day">
+        { total > 0 && <li className="totals"><strong>Total: {total}</strong></li> }
         {
           listData.map(item => (
-            <li key={item.key} style={{ marginLeft: "0px" }}>
+            <li key={item.key} className="item">
               <Popover content={this.renderDetails(value, listData, total)} title={value.format('YYYY-MM-DD')} trigger="click">
                 <span>({item.hours}) {item.projectName || item.project}</span>
               </Popover>
@@ -79,8 +81,8 @@ class UserExecutionCalendarPage extends Component {
   
   getMonthData(value) {
     const { executions, } = this.state;
-    const start = value.startOf('month').valueOf();
-    const end = value.endOf('month').valueOf();
+    const start = value.utc().startOf('month').valueOf();
+    const end = value.utc().endOf('month').valueOf();
     return this.filterData(executions, start, end).reduce((x, y) => x + (y.hours || 0), 0);
   }
   
@@ -95,8 +97,8 @@ class UserExecutionCalendarPage extends Component {
   }
 
   calendarPanelChange(date, mode) {
-    const start = date.startOf(mode).valueOf();
-    const end = date.endOf(mode).valueOf() + 1;
+    const start = date.utc().startOf(mode).valueOf();
+    const end = date.utc().endOf(mode).valueOf() + 1;
     db.onceGetUserExecutionsMap({start, end}).then(executions => {
       this.setState(() => ({ ...{
         executions: mapToArray(executions).sort((a, b) => (b.dateValue || 0) - (a.dateValue || 0))
@@ -106,8 +108,8 @@ class UserExecutionCalendarPage extends Component {
 
   dateSelected(value) {
     const { executions, } = this.state;
-    const start = value.startOf('day').valueOf();
-    const end = value.endOf('day').valueOf();
+    const start = value.utc().startOf('day').valueOf();
+    const end = value.utc().endOf('day').valueOf();
     const listData = this.summarizeProjectData(this.filterData(executions, start, end));
     this.setState(() => ({ ...{
       selectedDate: value,
@@ -117,12 +119,18 @@ class UserExecutionCalendarPage extends Component {
   }
 
   renderDetails(date, listData, total) {
-    return <ul className="events">
-      { total > 0 && <li style={{ textAlign: "center", marginBottom: "15px", display: "block" }}><strong>Total: {total}</strong></li> }
+    return <ul className="calendar-modal">
+      { total > 0 && <li className="totals"><strong>Total: {total}</strong></li> }
       { listData && listData.map(item => (
-          <li key={item.key} style={{ display: "block", marginBottom: "10px", marginLeft: "0px", padding: "5px" }}>
+          <li key={item.key} className="item">
             <div>
               <h4 style={{ marginBottom: "2px" }}>({item.hours}) {item.projectName || item.project}</h4>
+              <ul>
+              {item.children.map(execution => (
+                <li className="subItem" key={"c" + execution.key} tooltip={execution.key}>
+                  <p>({execution.hours}) {execution.description || '-'}</p>
+                </li>))}
+              </ul>
               <div className={"card-actions"} style={{ marginTop: "0px" }}>
                 <Link to={routes.PROJECT_EXECUTION_LIST.replace(':hive', item.hive).replace(':project', item.project)}>Histórico</Link>
                 <Link to={routes.PROJECT_EXECUTION_FORM.replace(':hive', item.hive).replace(':project', item.project)}>Execução</Link>

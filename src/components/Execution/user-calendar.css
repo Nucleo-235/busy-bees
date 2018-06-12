@@ -1,0 +1,22 @@
+ul.calendar-day li {
+  display: block;
+  margin-left: 0px;
+}
+ul.calendar-day li.totals {
+  text-align: center;
+}
+ul.calendar-modal li {
+  display: block;
+  margin-left: 0px;
+  margin-bottom: 10px;
+}
+ul.calendar-modal li.totals {
+  margin-bottom: 15px;
+  text-align: center;
+}
+ul.calendar-modal li.subItem {
+  margin-bottom: 2px;
+}
+ul li p {
+  max-width: 300px;
+}
