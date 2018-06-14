@@ -19,13 +19,16 @@ export const doCreateUser = (id, username, email, displayName = null, photoURL =
   });
 }
 
-export const doCreateExecution = (hive, execution) => {
-  return new Promise((resolve, reject) => {
+export const saveExecution = (hive, execution, executionKey = null) => {
+  if (executionKey) {
+    return db.ref(`hives/${hive}/executions/${executionKey}`).update(execution).then((key) => {
+      return { key: key, val: () => execution };
+    });
+  } else {
     return db.ref(`hives/${hive}/executions`).push(execution).then((key) => {
-      resolve({ key: key, val: () => execution });
-    }, reject);
-  });
-  
+      return { key: key, val: () => execution };
+    });
+  }
 }
 
 export const onceGetHives = () => {
@@ -82,6 +85,10 @@ export const firstProjectSummaryChange = (hive, project) => {
 
 export const onceGetProjectSnapshot = (hive, project) => {
   return db.ref(`hives/${hive}/projects/${project}`).once('value');
+};
+
+export const onceGetExecutionSnapshot = (hive, key) => {
+  return db.ref(`hives/${hive}/executions/${key}`).once('value');
 };
 
 export const onceGetProjectExecutionsSnapshot = (hive, project) => {

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { withRouter, Link } from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
 
 import * as moment from 'moment';
 
@@ -9,10 +9,12 @@ import { db } from '../../firebase';
 import withAuthorization from '../Session/withAuthorization';
 import * as routes from '../../constants/routes';
 
-import { Calendar, Popover } from 'antd';
+import { Calendar, Modal } from 'antd';
 import { mapToArray } from '../../utils/listUtils';
 
 import './user-calendar.css';
+
+const DefaultDateDBFormat = "YYYY-MM-DD";
 
 const INITIAL_STATE = {
   executions: null,
@@ -58,7 +60,7 @@ class UserExecutionCalendarPage extends Component {
   }
 
   dateCellRender(value) {
-    const { executions, } = this.state;
+    const { executions } = this.state;
     const start = value.utc().startOf('day').valueOf();
     const end = value.utc().endOf('day').valueOf();
     const listData = this.summarizeProjectData(this.filterData(executions, start, end));
@@ -69,9 +71,7 @@ class UserExecutionCalendarPage extends Component {
         {
           listData.map(item => (
             <li key={item.key} className="item">
-              <Popover content={this.renderDetails(value, listData, total)} title={value.format('YYYY-MM-DD')} trigger="click">
-                <span>({item.hours}) {item.projectName || item.project}</span>
-              </Popover>
+              <span>({item.hours}) {item.projectName || item.project}</span>
             </li>
           ))
         }
@@ -111,14 +111,17 @@ class UserExecutionCalendarPage extends Component {
     const start = value.utc().startOf('day').valueOf();
     const end = value.utc().endOf('day').valueOf();
     const listData = this.summarizeProjectData(this.filterData(executions, start, end));
-    this.setState(() => ({ ...{
-      selectedDate: value,
-      selectedList: listData,
-      detailsVisible: true
-    } }));
+    const total = listData.reduce((x, y) => x + (y.hours || 0), 0)
+    this.setState(() => ({ ...{ 
+      selectedDate: value, 
+      selectedList: listData, 
+      selectedTotal: total, 
+      detailsVisible: true 
+    } })); 
   }
 
-  renderDetails(date, listData, total) {
+  renderDetails(date, listData, total, linkTo) {
+    const dayFormPath = `${routes.EMPTY_EXECUTION_FORM}?date=${date.utc().format(DefaultDateDBFormat)}`;
     return <ul className="calendar-modal">
       { total > 0 && <li className="totals"><strong>Total: {total}</strong></li> }
       { listData && listData.map(item => (
@@ -128,22 +131,37 @@ class UserExecutionCalendarPage extends Component {
               <ul>
               {item.children.map(execution => (
                 <li className="subItem" key={"c" + execution.key} tooltip={execution.key}>
-                  <p>({execution.hours}) {execution.description || '-'}</p>
+                  <a onClick={ev => linkTo(ev, routes.EDIT_EXECUTION_FORM.replace(':hive', item.hive).replace(':key', execution.key))}>({execution.hours}) {execution.description || '-'}</a>
                 </li>))}
               </ul>
-              <div className={"card-actions"} style={{ marginTop: "0px" }}>
-                <Link to={routes.PROJECT_EXECUTION_LIST.replace(':hive', item.hive).replace(':project', item.project)}>Histórico</Link>
-                <Link to={routes.PROJECT_EXECUTION_FORM.replace(':hive', item.hive).replace(':project', item.project)}>Execução</Link>
-              </div>
+              {/* <div className={"card-actions"} style={{ marginTop: "0px" }}>
+                <a onClick={ev => linkTo(ev, routes.PROJECT_EXECUTION_LIST.replace(':hive', item.hive).replace(':project', item.project))} >Histórico</a>
+                <a onClick={ev => linkTo(ev, routes.PROJECT_EXECUTION_FORM.replace(':hive', item.hive).replace(':project', item.project))} >Execução</a>
+              </div> */}
             </div>
           </li>
         ))
       }
+      <div className={"day-actions"} style={{ marginTop: "15px" }}>
+        <a onClick={ev => linkTo(ev, dayFormPath)} >Nova Execução</a>
+      </div>
     </ul>
   }
 
   render() {
-    const { executions } = this.state;
+    const { executions, 
+      selectedDate, selectedList, selectedTotal, detailsVisible } = this.state;
+
+    const closeModal = () =>  { 
+      this.setState({ ...{ detailsVisible: false } });
+    }
+
+    const linkTo = (ev, path) =>  { 
+      ev.preventDefault();
+      closeModal();
+      this.props.history.push(path);
+      return false;
+    }
 
     return (
       <div style={{ textAlign: "center", width: "100%" }}>
@@ -154,6 +172,12 @@ class UserExecutionCalendarPage extends Component {
             monthCellRender={value => this.monthCellRender(value)}
             onPanelChange={(value, mode) => this.calendarPanelChange(value, mode)} 
             onSelect={(value => this.dateSelected(value))} />}
+        { selectedDate && <Modal
+          visible={detailsVisible} footer={null}
+          onCancel={closeModal}
+          title={selectedDate.format('YYYY-MM-DD')}>
+          {this.renderDetails(selectedDate, selectedList, selectedTotal, linkTo)}
+        </Modal>}
       </div>
     );
   }

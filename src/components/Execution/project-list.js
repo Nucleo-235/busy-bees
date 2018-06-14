@@ -61,6 +61,7 @@ class ProjectExecutionListPage extends Component {
   render() {
     const {
       projectModel,
+      hive,
       executions,
     } = this.state;
 
@@ -68,7 +69,7 @@ class ProjectExecutionListPage extends Component {
       <div style={{ textAlign: "center", width: "100%" }}>
         { projectModel && <h2>{projectModel.name}</h2> }
         <h3>Execuções</h3>
-        {executions && <ExecutionList executions={executions} />}
+        {executions && <ExecutionList hive={hive} executions={executions} />}
       </div>
     );
   }

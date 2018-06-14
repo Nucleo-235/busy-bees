@@ -35,8 +35,9 @@ const App = () =>
         <Route exact path={routes.PASSWORD_FORGET} component={() => <PasswordForgetPage />} />
         <Route exact path={routes.ACCOUNT} component={() => <AccountPage />} />
         <Route exact path={routes.PROJECT_EXECUTION_FORM} component={() => <ExecutionFormPage />} />
-        <Route exact path={routes.EMPTY_EXECUTION_FORM} component={() => <ExecutionFormPage />} />
         <Route exact path={routes.PROJECT_EXECUTION_LIST} component={() => <ProjectExecutionListPage />} />
+        <Route exact path={routes.EMPTY_EXECUTION_FORM} component={() => <ExecutionFormPage />} />
+        <Route exact path={routes.EDIT_EXECUTION_FORM} component={() => <ExecutionFormPage />} />
         <Route exact path={routes.EXECUTION_LIST} component={() => <UserExecutionListPage />} />
         <Route exact path={routes.EXECUTION_CALENDAR} component={() => <UserExecutionCalendarPage />} />
       </Content>
