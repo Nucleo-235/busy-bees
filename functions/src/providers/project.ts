@@ -78,9 +78,9 @@ const getExecutionPrice = (execution, participant) => {
 const newSummary = () : Summary => new Summary();
 
 const increaseSummaryStatus = (summaryStatus: SummaryStatus, newData : ISummaryStatus) => {
-  summaryStatus.hours += newData.hours || 0;
-  summaryStatus.difficulty += newData.difficulty || 0;
-  summaryStatus.spent += newData.spent || 0;
+  summaryStatus.hours = (summaryStatus.hours || 0) + (newData.hours || 0);
+  summaryStatus.difficulty = (summaryStatus.difficulty || 0) + (newData.difficulty || 0);
+  summaryStatus.spent = (summaryStatus.spent || 0) + (newData.spent || 0);
 };
 
 const increaseSummaryStatuses = (summaryStatuses: Summary, newData: Summary) => {
@@ -90,78 +90,81 @@ const increaseSummaryStatuses = (summaryStatuses: Summary, newData: Summary) => 
 };
 
 export const calculateSummary = (hiveId, projectId) => {
-  return new Promise((resolve, reject) => {
-    const projectPath = `/hives/${hiveId}/projects/${projectId}`;
-    admin.database().ref(projectPath).once('value').then(projectSnap => {
-      const project = projectSnap.val();
-      const participantsMap = project.participants || {};
-      const promises = [];
-      const todayEnd = moment().endOf('day').valueOf();
-      promises.push(listSubProjects(hiveId, projectId).then(subProjectsResults => {
-        const subSummary = newSummary();
-        
-        for (const subProjectSnap of subProjectsResults) {
-          const subProject = subProjectSnap.val();
-          if (subProject.summary) {
-            increaseSummaryStatuses(subSummary, subProject.summary);
-          }
-        };
-        return subSummary;
-      }));
-      promises.push(admin.database().ref(`/hives/${hiveId}/executions`).orderByChild('project').equalTo(projectId).once('value').then(executionsSnaps => {
-        const executionsSummary = newSummary();
+  const projectPath = `/hives/${hiveId}/projects/${projectId}`;
+  return admin.database().ref(projectPath).once('value').then(projectSnap => {
+    const project = projectSnap.val();
+    const participantsMap = project.participants || {};
+    const promises = [];
+    const todayEnd = moment().endOf('day').valueOf();
+    promises.push(listSubProjects(hiveId, projectId).then(subProjectsResults => {
+      const subSummary = newSummary();
+      
+      for (const subProjectSnap of subProjectsResults) {
+        const subProject = subProjectSnap.val();
+        if (subProject.summary) {
+          increaseSummaryStatuses(subSummary, subProject.summary);
+        }
+      };
+      return subSummary;
+    }));
+    promises.push(admin.database().ref(`/hives/${hiveId}/executions`).orderByChild('project').equalTo(projectId).once('value').then(executionsSnaps => {
+      console.log(`project ${projectId} execs`, executionsSnaps.numChildren());
+      const executionsSummary = newSummary();
 
-        executionsSnaps.forEach(executionSnap => {
-          // const executionKey = executionSnap.key;
-          const execution = executionSnap.val();
-          const statusSummary = execution.dateValue && execution.dateValue > todayEnd ? executionsSummary.planned : executionsSummary.done;
-          execution.spent = getExecutionPrice(execution, participantsMap[execution.participant]);
-          increaseSummaryStatus(statusSummary, execution);
-          increaseSummaryStatus(executionsSummary.total, execution);
-        });
-        return executionsSummary;
-      }));
-      Promise.all(promises).then(results => {
-        const baseSummary = newSummary();
-        increaseSummaryStatuses(baseSummary, results[0]);
-        increaseSummaryStatuses(baseSummary, results[1]);
-        if (project.totalDifficulty && project.totalDifficulty > 0) {
-          baseSummary.todoDifficulty = Math.max(project.totalDifficulty - baseSummary.done.difficulty, 0);
-          baseSummary.difficultyProgress = Math.min(baseSummary.done.difficulty / project.totalDifficulty, 1);
-        }
-        if (project.price && project.price > 0) {
-          baseSummary.availableAmount = Math.max(project.price - baseSummary.done.spent, 0);
-          baseSummary.spentProgress = Math.min(baseSummary.done.spent / project.price, 1);
-        }
-        resolve(baseSummary);
-      }, reject);
-    }, reject);
+      executionsSnaps.forEach(executionSnap => {
+        // const executionKey = executionSnap.key;
+        const execution = executionSnap.val();
+        const statusSummary = execution.dateValue && execution.dateValue > todayEnd ? executionsSummary.planned : executionsSummary.done;
+        execution.spent = getExecutionPrice(execution, participantsMap[execution.participant]);
+        increaseSummaryStatus(statusSummary, execution);
+        increaseSummaryStatus(executionsSummary.total, execution);
+      });
+      return executionsSummary;
+    }));
+    return Promise.all(promises).then(results => {
+      const baseSummary = newSummary();
+      increaseSummaryStatuses(baseSummary, results[0]);
+      increaseSummaryStatuses(baseSummary, results[1]);
+      if (project.totalDifficulty && project.totalDifficulty > 0) {
+        baseSummary.todoDifficulty = Math.max(project.totalDifficulty - baseSummary.done.difficulty, 0);
+        baseSummary.difficultyProgress = Math.min(baseSummary.done.difficulty / project.totalDifficulty, 1);
+      }
+      if (project.price && project.price > 0) {
+        baseSummary.availableAmount = Math.max(project.price - baseSummary.done.spent, 0);
+        baseSummary.spentProgress = Math.min(baseSummary.done.spent / project.price, 1);
+      }
+      return baseSummary;
+    });
   });
 }
 
 export const updateSummary = (hiveId, projectId) => {
-  return new Promise((resolve, reject) => {
-    calculateSummary(hiveId, projectId).then(baseSummary => {
-      admin.database().ref(`/hives/${hiveId}/projects/${projectId}/summary`).set(baseSummary).then(() => {
-          resolve(baseSummary);
-      }, reject);
-    }, reject);
+  return calculateSummary(hiveId, projectId).then(baseSummary => {
+    return admin.database().ref(`/hives/${hiveId}/projects/${projectId}/summary`).set(baseSummary).then(() => {
+      return baseSummary;
+    });
   });
 }
 
+const promiseSerial = funcs =>
+  funcs.reduce((promise, func) =>
+    promise.then(result => func().then(Array.prototype.concat.bind(result))),
+    Promise.resolve([]))
+
 export const updateAllSummaries = () => {
-  return new Promise((resolve, reject) => {
-    admin.database().ref(`/hives`).once('value').then((hives) => {
-      const promises = [];
-      hives.forEach(hiveSnap => {
-        const hiveId = hiveSnap.key;
-        const hive = hiveSnap.val();
+  return admin.database().ref(`/hives`).once('value').then((hivesSnap) => {
+    const promises = [];
+    const hives = hivesSnap.val();
+    // console.log(hives);
+    for (const hiveId in hives) {
+      if (hives.hasOwnProperty(hiveId)) {
+        const hive = hives[hiveId];
         if (hive.projects) {
-          Array.prototype.push(promises, Object.keys(hive.projects).map(projectId => updateSummary(hiveId, projectId)));
+          Array.prototype.push.apply(promises, Object.keys(hive.projects).map(projectId => ({ hiveId, projectId })));
         }
-      });
-      return promises.length === 0 ? resolve([]) : Promise.all(promises).then(resolve, reject);
-    }, reject);
+      }
+    }
+    return promises.length === 0 ? [] : promiseSerial(promises.map(task => exec => updateSummary(task.hiveId, task.projectId)));
   });
 }
 
@@ -192,7 +195,7 @@ export const checkCalculatedValues = (hiveId, projectKey, project) => {
 
   if (Object.keys(newValues).length > 0) {
     return admin.database().ref(`/hives/${hiveId}/projects/${projectKey}`).update(newValues).then(() => {
-      return Promise.resolve(Object.assign({}, project, { key: projectKey }));
+      return Object.assign({}, project, { key: projectKey });
     });
   }
   

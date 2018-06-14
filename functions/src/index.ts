@@ -46,9 +46,9 @@ export const projectSummaryWritten = functions.database.ref('/hives/{hiveId}/pro
 
     if (project.parentProject) {
       if (project.parentHive)
-        return projectProvider.updateSummary(project.parentHive, project.parentProject);
+        return projectProvider.updateSummary(project.parentHive, project.parentProject).then(() => true);
       else
-        return projectProvider.updateSummary(hiveId, project.parentProject);
+        return projectProvider.updateSummary(hiveId, project.parentProject).then(() => true);
     } else {
       return true;
     }
