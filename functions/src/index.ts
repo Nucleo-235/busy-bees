@@ -31,7 +31,7 @@ export const projectParentChanged = functions.database.ref('/hives/{hiveId}/proj
   const hiveId = event.params.hiveId;
   const projectId = event.params.projectId;
   const parentProjectPath = event.data.val();
-  projectProvider.cacheProjectParent(hiveId, projectId, parentProjectPath);
+  return projectProvider.cacheProjectParent(hiveId, projectId, parentProjectPath);
 });
 
 export const projectSummaryWritten = functions.database.ref('/hives/{hiveId}/projects/{projectId}/summary').onWrite(event => {

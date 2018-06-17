@@ -17,7 +17,7 @@
       }
     },
     "parentCache": {
-      ".indexOn": ".value"
+      ".indexOn": ["parentProjectPath"]
     }
   }
 }
