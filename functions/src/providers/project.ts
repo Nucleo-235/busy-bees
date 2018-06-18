@@ -220,6 +220,13 @@ export const checkCalculatedValues = (hiveId, projectKey, project) => {
       newValues.doneAtDateValue = doneAtDateValue;
     }
   }
+  if (project.taxPct && project.rawPrice) {
+    let price = (project.rawPrice * (1 - project.taxPct)) - (project.sharedPrice ? project.sharedPrice : 0);
+    if (!project.price || project.price !== price) {
+      project.price = price;
+      newValues.price = price;
+    }
+  }
 
   if (project.deadlineDateValue && project.startAtDateValue) {
     const deadlineDaysPeriod = Math.ceil(moment(project.deadlineDateValue).diff(moment(project.startAtDateValue), 'days', true));
