@@ -73,10 +73,11 @@ class ExecutionFormPage extends Component {
   }
 
   parseExtraParams() {
-    const queryData = qs.parse(this.props.location.search);
+    const queryData = qs.parse(this.props.location.search.replace(/^\?+/g, ''));
     if (queryData.date) {
+      const momementDate = moment(queryData.date, DefaultDateDBFormat);
       this.setState(() => ({ ...{
-        date: moment(queryData.date, DefaultDateDBFormat),
+        date: momementDate,
       } }));
     }
   }
@@ -212,7 +213,7 @@ class ExecutionFormPage extends Component {
     return (
       <div>
         <FormItem>
-          <DatePicker defaultValue={moment().startOf('day')} value={date} format={DefaultDatePrettyFormat}
+          <DatePicker value={date} format={DefaultDatePrettyFormat}
             onChange={value => this.setState(updateByPropertyName('date', value))}
           />
         </FormItem>
