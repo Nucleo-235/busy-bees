@@ -213,6 +213,13 @@ export const checkCalculatedValues = (hiveId, projectKey, project) => {
       newValues.startAtDateValue = startAtDateValue;
     }
   }
+  if (project.doneAt) {
+    const doneAtDateValue = moment(project.doneAt, "YYYY-MM-DD").valueOf();
+    if (!project.doneAtDateValue || project.doneAtDateValue !== doneAtDateValue) {
+      project.doneAtDateValue = doneAtDateValue;
+      newValues.doneAtDateValue = doneAtDateValue;
+    }
+  }
 
   if (project.deadlineDateValue && project.startAtDateValue) {
     const deadlineDaysPeriod = Math.ceil(moment(project.deadlineDateValue).diff(moment(project.startAtDateValue), 'days', true));

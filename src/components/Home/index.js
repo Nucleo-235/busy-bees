@@ -88,7 +88,14 @@ const ProjectSummary = ({project, summary}) => {
   let deadlineTitle = project.deadline || 'Prazo';
   if (project.startAtDateValue && project.deadlineDaysPeriod && project.deadlineDaysPeriod > 0) {
     if (project.finished) {
-      deadlineInfo = <ProgressItemInverse pct={1} title={deadlineTitle} />
+      if (project.doneAtDateValue && project.doneAtDateValue > project.deadlineDateValue) {
+        const daysFromStart = moment(project.doneAtDateValue).diff(moment(project.startAtDateValue), 'days');
+        const daysPct = daysFromStart / project.deadlineDaysPeriod;
+        deadlineInfo = <ProgressItemInverse pct={daysPct} title={deadlineTitle} />
+      } else {
+        deadlineInfo = <ProgressItemInverse pct={1} title={deadlineTitle} />
+      }
+      
     } else {
       const daysFromStart = moment().diff(moment(project.startAtDateValue), 'days');
       const daysPct = daysFromStart / project.deadlineDaysPeriod;
