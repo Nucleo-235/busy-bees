@@ -117,7 +117,7 @@ httpPublicApp.get('/hives/:hiveId/schedules/rebuild', (req, res) => {
 
 httpPublicApp.get('/cron/rebuild/summary', (req, res) => {
   projectProvider.updateAllSummaries().then(summary => {
-    res.status(200).send(summary);
+    res.status(200).send({ updated: summary.length });
   }, error => {
     res.status(500).send({ error: error });
   });
