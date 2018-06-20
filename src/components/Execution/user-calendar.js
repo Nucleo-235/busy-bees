@@ -120,33 +120,54 @@ class UserExecutionCalendarPage extends Component {
     } })); 
   }
 
-  renderDetails(date, listData, total, linkTo) {
-    const start = moment.utc().startOf('day');
-    const end = moment.utc().endOf('day');
-    const isToday = date >= start && date <= end;
-    const dayFormPath = `${routes.EMPTY_EXECUTION_FORM}?date=${date.utc().format(DefaultDateDBFormat)}`;
+  renderDetailsList(isToday, label, total, items, totalClass = "totals") {
     return <ul className="calendar-modal">
-      { total > 0 && <li className="totals"><strong>Total: {total}</strong></li> }
-      { listData && listData.map(item => (
-          <li key={item.key} className="item">
-            <div>
-              <h4 style={{ marginBottom: "2px" }}>({item.hours}) {item.projectName || item.project}</h4>
-              <ul>
-              {item.children.map(execution => (
-                <li className="subItem" key={"c" + execution.key} tooltip={execution.key}>
-                  <Link to={routes.EDIT_EXECUTION_FORM.replace(':hive', item.hive).replace(':key', execution.key)}>
-                    ({execution.hours}) {execution.description || '-'}{isToday && execution.planned && <i style={{marginLeft: "5px"}}>Planejada</i>}
-                  </Link>
-                </li>))}
-              </ul>
-            </div>
-          </li>
-        ))
-      }
+      <li className={totalClass}><strong>{label}: {total}</strong></li>
+      { items.map(item => 
+      <li key={item.key} className="item">
+        <div>
+          <h4 style={{ marginBottom: "2px" }}>({item.hours}) {item.projectName || item.project}</h4>
+          <ul>
+          {item.children.map(execution => (
+            <li className="subItem" key={"c" + execution.key} tooltip={execution.key}>
+              <Link to={routes.EDIT_EXECUTION_FORM.replace(':hive', item.hive).replace(':key', execution.key)}>
+                ({execution.hours}) {execution.description || '-'}{isToday && execution.planned && <i style={{marginLeft: "5px"}}>Planejada</i>}
+              </Link>
+            </li>))}
+          </ul>
+        </div>
+      </li>
+      )}
+    </ul>
+  }
+
+  renderDetails(date, listData, total) {
+    const start = moment().utc().startOf('day');
+    const end = moment().utc().endOf('day');
+    const isToday = date >= start && date <= end;
+    const items = listData || [];
+    const plannedItems = isToday ? items.filter(e => e.planned) : [];
+    const executedItems = isToday ? items.filter(e => !e.planned) : items;
+    const plannedTotal = plannedItems.reduce((x, y) => x + (y.hours || 0), 0);
+    const dayFormPath = `${routes.EMPTY_EXECUTION_FORM}?date=${date.utc().format(DefaultDateDBFormat)}`;
+
+    let baseDetails = null;
+    if (plannedTotal > 0 && total > plannedTotal) {
+      baseDetails = <div>
+        {this.renderDetailsList(isToday, "Total", total, [], "totals")}
+        {this.renderDetailsList(isToday, "Planejadas", plannedTotal, plannedItems, "subtotals")}
+        {this.renderDetailsList(isToday, "Executadas", total - plannedTotal, executedItems, "subtotals")}
+      </div>
+    } else {
+      baseDetails = this.renderDetailsList(isToday, "Total", total, items, "totals")
+    }
+
+    return <div>
+      {baseDetails}
       <div className={"day-actions"} style={{ marginTop: "15px" }}>
         <Link to={dayFormPath} >Nova Execução</Link>
       </div>
-    </ul>
+    </div>
   }
 
   render() {
@@ -155,13 +176,6 @@ class UserExecutionCalendarPage extends Component {
 
     const closeModal = () =>  { 
       this.setState({ ...{ detailsVisible: false } });
-    }
-
-    const linkTo = (ev, path) =>  { 
-      ev.preventDefault();
-      closeModal();
-      this.props.history.push(path);
-      return false;
     }
 
     return (
@@ -177,7 +191,7 @@ class UserExecutionCalendarPage extends Component {
           visible={detailsVisible} footer={null}
           onCancel={closeModal}
           title={selectedDate.format('YYYY-MM-DD')}>
-          {this.renderDetails(selectedDate, selectedList, selectedTotal, linkTo)}
+          {this.renderDetails(selectedDate, selectedList, selectedTotal)}
         </Modal>}
       </div>
     );

@@ -14,9 +14,16 @@ ul.calendar-modal li.totals {
   margin-bottom: 15px;
   text-align: center;
 }
+ul.calendar-modal li.subtotals {
+  margin-bottom: 10px;
+  text-align: left;
+}
 ul.calendar-modal li.subItem {
   margin-bottom: 2px;
 }
 ul li p {
   max-width: 300px;
+}
+.day-actions {
+  text-align: right;
 }

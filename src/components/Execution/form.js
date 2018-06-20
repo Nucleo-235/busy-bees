@@ -89,10 +89,13 @@ class ExecutionFormPage extends Component {
       if (this.props.match.params.key) {
         const executionKey = this.props.match.params.key;
         db.onceGetExecutionSnapshot(hive, executionKey).then(executionSnap => {
+          const endOfToday = moment().endOf('day');
+
           const data = executionSnap.val();
           data.hive = hive;
           data.key = executionKey;
           data.date = moment(data.date, DefaultDateDBFormat);
+          data.planned = data.planned || data.date > endOfToday;
           this.setState(() => ({ ...data }));
         });
       } else if (this.props.match.params.project) {
@@ -257,8 +260,9 @@ class ExecutionFormPage extends Component {
 
         { date >= startOfToday && date<= endOfToday && <FormItem>
           <Checkbox
-            checked={planned}
-            onChange={value => this.setState(updateByPropertyName('planned', planned))}
+            value={planned}
+            defaultChecked={planned}
+            onChange={value => this.setState(updateByPropertyName('planned', value))}
           >Planejada?</Checkbox>
         </FormItem>}
         
