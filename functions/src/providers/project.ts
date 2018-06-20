@@ -115,6 +115,7 @@ export const calculateSummary = (hiveId, projectId) => {
     const project = projectSnap.val();
     const participantsMap = project.participants || {};
     const promises = [];
+    const todayStart = moment().startOf('day').valueOf();
     const todayEnd = moment().endOf('day').valueOf();
     promises.push(listSubProjects(hiveId, projectId).then(subProjectsResults => {
       const subSummary = newProjectSummary();
@@ -133,7 +134,8 @@ export const calculateSummary = (hiveId, projectId) => {
       executionsSnaps.forEach(executionSnap => {
         // const executionKey = executionSnap.key;
         const execution = executionSnap.val();
-        const statusSummary = execution.dateValue && execution.dateValue > todayEnd ? executionsSummary.planned : executionsSummary.done;
+        const isPlanned = execution.dateValue > todayEnd || (execution.dateValue >= todayStart && execution.planned);
+        const statusSummary = isPlanned ? executionsSummary.planned : executionsSummary.done;
         execution.spent = getExecutionPrice(execution, participantsMap[execution.participant]);
         increaseSummaryStatus(statusSummary, execution);
         increaseSummaryStatus(executionsSummary.total, execution);

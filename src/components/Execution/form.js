@@ -140,6 +140,12 @@ class ExecutionFormPage extends Component {
       execution.description = description;
     }
 
+    if (date > moment().endOf('day')) {
+      execution.planned = true;
+    } else if (date >= moment().startOf('day')) {
+      execution.planned = false;
+    }
+
     db.saveExecution(hive, execution, key)
       .then((result) => {
         const { onSetHives } = this.props;
