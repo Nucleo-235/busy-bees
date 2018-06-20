@@ -177,6 +177,14 @@ export const updateSummary = (hiveId, projectId) => {
   });
 }
 
+export const updateSummaryWithPath = (projectPath) => {
+  return admin.database().ref(projectPath).once('value').then(projectSnap => {
+    const hiveId = projectSnap.ref.parent.parent.key;
+    const projectId = projectSnap.key;
+    return updateSummary(hiveId, projectId);
+  });
+}
+
 const promiseSerial = funcs =>
   funcs.reduce((promise, func) =>
     promise.then(result => func().then(Array.prototype.concat.bind(result))),
@@ -223,7 +231,7 @@ export const checkCalculatedValues = (hiveId, projectKey, project) => {
     }
   }
   if (project.taxPct && project.rawPrice) {
-    let price = (project.rawPrice * (1 - project.taxPct)) - (project.sharedPrice ? project.sharedPrice : 0);
+    const price = (project.rawPrice * (1 - project.taxPct)) - (project.sharedPrice ? project.sharedPrice : 0);
     if (!project.price || project.price !== price) {
       project.price = price;
       newValues.price = price;
