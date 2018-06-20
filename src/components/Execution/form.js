@@ -16,7 +16,7 @@ import { mapToArray } from '../../utils/listUtils';
 
 import './form.css';
 
-import { Form, Select, InputNumber, Input, Button, DatePicker } from 'antd';
+import { Form, Select, InputNumber, Input, Button, DatePicker, Checkbox } from 'antd';
 const Option = Select.Option;
 const { TextArea } = Input;
 const FormItem = Form.Item;
@@ -39,6 +39,7 @@ const INITIAL_STATE = {
   project: null,
   error: null,
   projectSelectorVisibile: true,
+  planned: false,
 };
 
 class ExecutionFormPage extends Component {
@@ -120,6 +121,7 @@ class ExecutionFormPage extends Component {
       difficulty,
       description,
       participant,
+      planned
     } = this.state;
 
     const {
@@ -143,7 +145,7 @@ class ExecutionFormPage extends Component {
     if (date > moment().endOf('day')) {
       execution.planned = true;
     } else if (date >= moment().startOf('day')) {
-      execution.planned = false;
+      execution.planned = planned;
     }
 
     db.saveExecution(hive, execution, key)
@@ -204,10 +206,14 @@ class ExecutionFormPage extends Component {
       date,
       description,
       participant,
+      planned,
       error,
     } = this.state;
 
     const participants = hives[hive].projects[project].participants;
+
+    const startOfToday = moment().startOf('day');
+    const endOfToday = moment().endOf('day');
 
     const isInvalid =
       hive === null ||
@@ -248,6 +254,13 @@ class ExecutionFormPage extends Component {
           onChange={event => this.setState(updateByPropertyName('description', event.target.value))}
           placeholder="Descrição"
         />
+
+        { date >= startOfToday && date<= endOfToday && <FormItem>
+          <Checkbox
+            checked={planned}
+            onChange={value => this.setState(updateByPropertyName('planned', planned))}
+          >Planejada?</Checkbox>
+        </FormItem>}
         
         <Button type="primary" htmlType="submit" disabled={isInvalid}>
           Salvar

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { withRouter } from 'react-router-dom';
+import { Link, withRouter } from 'react-router-dom';
 
 import * as moment from 'moment';
 
@@ -121,6 +121,9 @@ class UserExecutionCalendarPage extends Component {
   }
 
   renderDetails(date, listData, total, linkTo) {
+    const start = moment.utc().startOf('day');
+    const end = moment.utc().endOf('day');
+    const isToday = date >= start && date <= end;
     const dayFormPath = `${routes.EMPTY_EXECUTION_FORM}?date=${date.utc().format(DefaultDateDBFormat)}`;
     return <ul className="calendar-modal">
       { total > 0 && <li className="totals"><strong>Total: {total}</strong></li> }
@@ -131,19 +134,17 @@ class UserExecutionCalendarPage extends Component {
               <ul>
               {item.children.map(execution => (
                 <li className="subItem" key={"c" + execution.key} tooltip={execution.key}>
-                  <a onClick={ev => linkTo(ev, routes.EDIT_EXECUTION_FORM.replace(':hive', item.hive).replace(':key', execution.key))}>({execution.hours}) {execution.description || '-'}</a>
+                  <Link to={routes.EDIT_EXECUTION_FORM.replace(':hive', item.hive).replace(':key', execution.key)}>
+                    ({execution.hours}) {execution.description || '-'}{isToday && execution.planned && <i style={{marginLeft: "5px"}}>Planejada</i>}
+                  </Link>
                 </li>))}
               </ul>
-              {/* <div className={"card-actions"} style={{ marginTop: "0px" }}>
-                <a onClick={ev => linkTo(ev, routes.PROJECT_EXECUTION_LIST.replace(':hive', item.hive).replace(':project', item.project))} >Histórico</a>
-                <a onClick={ev => linkTo(ev, routes.PROJECT_EXECUTION_FORM.replace(':hive', item.hive).replace(':project', item.project))} >Execução</a>
-              </div> */}
             </div>
           </li>
         ))
       }
       <div className={"day-actions"} style={{ marginTop: "15px" }}>
-        <a onClick={ev => linkTo(ev, dayFormPath)} >Nova Execução</a>
+        <Link to={dayFormPath} >Nova Execução</Link>
       </div>
     </ul>
   }
