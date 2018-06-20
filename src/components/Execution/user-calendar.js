@@ -40,16 +40,28 @@ class UserExecutionCalendarPage extends Component {
   summarizeProjectData(executions) {
     var map = {};
     var list = [];
+    const startValue = moment().utc().startOf('day').valueOf();
+    const endValue = moment().utc().endOf('day').valueOf();
+    const isPlanned = (execution) => execution.dateValue > endValue || (execution.dateValue >= startValue && execution.planned);
     for (const execution of executions) {
-      if (map[execution.project]) {
-        const item = map[execution.project];
+      let item = map[execution.project];
+      if (item) {
         item.hours = (item.hours || 0) + execution.hours || 0;
         item.difficulty = (item.difficulty || 0) + execution.difficulty || 0;
         item.children.push(execution);
       } else {
-        const item = Object.assign({ }, execution, { children: [execution] });
+        item = Object.assign({ }, execution, { children: [execution], plannedChildren: [], doneChildren:[] });
         map[item.project] = item;
         list.push(item);
+      }
+      if (isPlanned(execution)) {
+        item.plannedChildren.push(execution);
+        item.plannedHours = (item.plannedHours || 0) + execution.hours || 0;
+        item.plannedDifficulty = (item.plannedDifficulty || 0) + execution.difficulty || 0;
+      } else {
+        item.doneChildren.push(execution);
+        item.doneHours = (item.doneHours || 0) + execution.hours || 0;
+        item.doneDifficulty = (item.doneDifficulty || 0) + execution.difficulty || 0;
       }
     }
     return list;
@@ -120,15 +132,15 @@ class UserExecutionCalendarPage extends Component {
     } })); 
   }
 
-  renderDetailsList(label, total, items, totalClass = "totals") {
+  renderDetailsList(label, total, items, property, hoursProperty, totalClass = "totals") {
     return <ul className="calendar-modal">
       <li className={totalClass}><strong>{label}: {total}</strong></li>
       { items.map(item => 
       <li key={item.key} className="item">
         <div>
-          <h4 style={{ marginBottom: "2px" }}>({item.hours}) {item.projectName || item.project}</h4>
+          <h4 style={{ marginBottom: "2px" }}>({item[hoursProperty]}) {item.projectName || item.project}</h4>
           <ul>
-          {item.children.map(execution => (
+          {item[property].map(execution => (
             <li className="subItem" key={"c" + execution.key} tooltip={execution.key}>
               <Link to={routes.EDIT_EXECUTION_FORM.replace(':hive', item.hive).replace(':key', execution.key)}>
                 ({execution.hours}) {execution.description || '-'}
@@ -142,24 +154,21 @@ class UserExecutionCalendarPage extends Component {
   }
 
   renderDetails(date, listData, total) {
-    const start = moment().utc().startOf('day');
-    const end = moment().utc().endOf('day');
-    const isToday = date >= start && date <= end;
     const items = listData || [];
-    const plannedItems = isToday ? items.filter(e => e.planned) : [];
-    const executedItems = isToday ? items.filter(e => !e.planned) : items;
-    const plannedTotal = plannedItems.reduce((x, y) => x + (y.hours || 0), 0);
+    const plannedItems = items.filter(i => i.plannedHours > 0);
+    const doneItems = items.filter(i => i.doneHours > 0);
+    const plannedTotal = items.reduce((x, y) => x + (y.plannedHours || 0), 0);
     const dayFormPath = `${routes.EMPTY_EXECUTION_FORM}?date=${date.utc().format(DefaultDateDBFormat)}`;
 
     let baseDetails = null;
     if (plannedTotal > 0 && total > plannedTotal) {
       baseDetails = <div>
-        {this.renderDetailsList("Total", total, [], "totals")}
-        {this.renderDetailsList(<i>Planejadas</i>, plannedTotal, plannedItems, "subtotals")}
-        {this.renderDetailsList("Executadas", total - plannedTotal, executedItems, "subtotals")}
+        {this.renderDetailsList("Total", total, [], 'children', 'hours', "totals")}
+        {this.renderDetailsList(<i>Planejadas</i>, plannedTotal, plannedItems, 'plannedChildren', 'plannedHours', "subtotals")}
+        {this.renderDetailsList("Executadas", total - plannedTotal, doneItems, 'doneChildren', 'doneHours', "subtotals")}
       </div>
     } else {
-      baseDetails = this.renderDetailsList(isToday, "Total", total, items, "totals")
+      baseDetails = this.renderDetailsList("Total", total, items, 'children', 'hours', "totals")
     }
 
     return <div>
