@@ -56,7 +56,7 @@ const ProgressItem = ({pct, title}) => {
   let format = percent => percent + '%';
   let status = null;
   if (pct >= 1) {
-    format = () => <i class="anticon anticon-check"></i>;
+    format = () => <i className="anticon anticon-check"></i>;
     status = "success";
   }
   return <ProgressItemFormatted pct={pct} title={title} format={format} status={status} />
@@ -66,7 +66,7 @@ const ProgressItemInverse = ({pct, title}) => {
   let format = percent => percent + '%';
   let status = null;
   if (pct === 1) {
-    format = () => <i class="anticon anticon-check"></i>;
+    format = () => <i className="anticon anticon-check"></i>;
     status = "success";
   } else if (pct > 1) {
     format = () => actualPercent + '%';
@@ -155,9 +155,9 @@ const ProjectList = ({ hive, projects }) => {
   
   return <div>
     {projectGroups.map(groupProject =>
-      <div>
+      <div key={groupProject.name}>
         <h3>{groupProject.name}</h3>
-        <Row key={groupProject.name} gutter={8}>
+        <Row gutter={8}>
           {groupProject.projects.sort(groupProject.sortingCB).map(project =>
             <Col key={project.key} md={{span: 8}} sm={{span: 12}} xs={{span: 24}} className={'projectItem'}>
               <ProjectItem hive={hive} projectKey={project.key} project={project} />

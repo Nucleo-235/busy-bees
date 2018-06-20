@@ -29,7 +29,7 @@ const updateByPropertyName = (propertyName, value) => () => ({
 });
 
 const INITIAL_STATE = {
-  key: null,
+  executionKey: null,
   hours: null,
   date: moment().startOf('day'),
   difficulty: null,
@@ -93,7 +93,7 @@ class ExecutionFormPage extends Component {
 
           const data = executionSnap.val();
           data.hive = hive;
-          data.key = executionKey;
+          data.executionKey = executionKey;
           data.date = moment(data.date, DefaultDateDBFormat);
           data.planned = data.planned || data.date > endOfToday;
           this.setState(() => ({ ...data }));
@@ -115,8 +115,10 @@ class ExecutionFormPage extends Component {
   }
 
   onSubmit = (event) => {
+    event.preventDefault();
+
     const {
-      key,
+      executionKey,
       hive,
       project,
       hours,
@@ -151,7 +153,7 @@ class ExecutionFormPage extends Component {
       execution.planned = planned;
     }
 
-    db.saveExecution(hive, execution, key)
+    db.saveExecution(hive, execution, executionKey)
       .then((result) => {
         const { onSetHives } = this.props;
         db.firstProjectSummaryChange(hive, project).then(changedSnapshot => {
@@ -168,8 +170,6 @@ class ExecutionFormPage extends Component {
       .catch(error => {
         this.setState(updateByPropertyName('error', error));
       });
-
-    event.preventDefault();
   }
 
   renderParticipantsSelect(participants, participant) {
@@ -260,9 +260,8 @@ class ExecutionFormPage extends Component {
 
         { date >= startOfToday && date<= endOfToday && <FormItem>
           <Checkbox
-            value={planned}
-            defaultChecked={planned}
-            onChange={value => this.setState(updateByPropertyName('planned', value))}
+            checked={planned}
+            onChange={e => this.setState(updateByPropertyName('planned', e.target.checked))}
           >Planejada?</Checkbox>
         </FormItem>}
         
