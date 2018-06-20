@@ -120,7 +120,7 @@ class UserExecutionCalendarPage extends Component {
     } })); 
   }
 
-  renderDetailsList(isToday, label, total, items, totalClass = "totals") {
+  renderDetailsList(label, total, items, totalClass = "totals") {
     return <ul className="calendar-modal">
       <li className={totalClass}><strong>{label}: {total}</strong></li>
       { items.map(item => 
@@ -131,7 +131,7 @@ class UserExecutionCalendarPage extends Component {
           {item.children.map(execution => (
             <li className="subItem" key={"c" + execution.key} tooltip={execution.key}>
               <Link to={routes.EDIT_EXECUTION_FORM.replace(':hive', item.hive).replace(':key', execution.key)}>
-                ({execution.hours}) {execution.description || '-'}{isToday && execution.planned && <i style={{marginLeft: "5px"}}>Planejada</i>}
+                ({execution.hours}) {execution.description || '-'}
               </Link>
             </li>))}
           </ul>
@@ -154,9 +154,9 @@ class UserExecutionCalendarPage extends Component {
     let baseDetails = null;
     if (plannedTotal > 0 && total > plannedTotal) {
       baseDetails = <div>
-        {this.renderDetailsList(isToday, "Total", total, [], "totals")}
-        {this.renderDetailsList(isToday, "Planejadas", plannedTotal, plannedItems, "subtotals")}
-        {this.renderDetailsList(isToday, "Executadas", total - plannedTotal, executedItems, "subtotals")}
+        {this.renderDetailsList("Total", total, [], "totals")}
+        {this.renderDetailsList(<i>Planejadas</i>, plannedTotal, plannedItems, "subtotals")}
+        {this.renderDetailsList("Executadas", total - plannedTotal, executedItems, "subtotals")}
       </div>
     } else {
       baseDetails = this.renderDetailsList(isToday, "Total", total, items, "totals")
