@@ -31,6 +31,12 @@ export const saveExecution = (hive, execution, executionKey = null) => {
   }
 }
 
+export const saveProject = (hive, project, projectKey) => {
+  return db.ref(`hives/${hive}/projects/${projectKey}`).set(project).then((key) => {
+    return { key: key, val: () => project };
+  });
+}
+
 export const onceGetHives = () => {
   const userId = auth.currentUser.uid;
   return new Promise((resolve, reject) => {
@@ -55,6 +61,17 @@ export const onceGetHives = () => {
     }, reject);
   })
 };
+
+export const loadHiveTeams = (hives) => {
+  const hiveKeys = Object.keys(hives);
+  const promises = hiveKeys.map(hiveKey => db.ref(`hives/${hiveKey}/team`).once('value'));
+  return Promise.all(promises).then(teamsSnap => {
+    teamsSnap.forEach((snap, idx) => {
+      hives[hiveKeys[idx]].team = snap.val();
+    });
+    return hives;
+  })
+}
 
 export const onceGetParticipants = (hive, project) => {
   return new Promise((resolve, reject) => {

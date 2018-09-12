@@ -12,6 +12,7 @@ import HomePage from '../Home';
 import AccountPage from '../Account';
 import { ExecutionFormPage, ProjectExecutionListPage, 
   UserExecutionListPage, UserExecutionCalendarPage } from '../Execution';
+import ProjectFormPage from '../Project/form';
 import withAuthentication from '../Session/withAuthentication';
 import * as routes from '../../constants/routes';
 
@@ -40,6 +41,8 @@ const App = () =>
         <Route exact path={routes.EDIT_EXECUTION_FORM} component={() => <ExecutionFormPage />} />
         <Route exact path={routes.EXECUTION_LIST} component={() => <UserExecutionListPage />} />
         <Route exact path={routes.EXECUTION_CALENDAR} component={() => <UserExecutionCalendarPage />} />
+        <Route exact path={routes.NEW_PROJECT_FORM} component={() => <ProjectFormPage />} />
+        <Route exact path={routes.EDIT_PROJECT_FORM} component={() => <ProjectFormPage />} />
       </Content>
       <Footer className="App-footer">&copy; Busy Bees</Footer>
     </Layout>

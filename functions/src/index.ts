@@ -11,6 +11,7 @@ admin.initializeApp(functions.config().firebase);
 // });
 
 import * as projectProvider from './providers/project';
+import * as projectSummaryProvider from './providers/project-summary';
 import * as executionProvider from './providers/execution';
 import * as scheduleProvider from './providers/schedule';
 
@@ -45,7 +46,7 @@ export const projectSummaryWritten = functions.database.ref('/hives/{hiveId}/pro
       return false;
 
     if (project.parentProject) {
-      return projectProvider.updateSummaryWithPath(project.parentProject).then(() => true);
+      return projectSummaryProvider.updateSummaryWithPath(project.parentProject).then(() => true);
     } else {
       return true;
     }
@@ -63,7 +64,7 @@ export const projectExecutionWritten = functions.database.ref('/hives/{hiveId}/e
   promises.push(scheduleProvider.executionToSchedule(hiveId, executionId, execution));
 
   if (execution && execution.project) {
-    promises.push(projectProvider.updateSummary(hiveId, execution.project));
+    promises.push(projectSummaryProvider.updateSummary(hiveId, execution.project));
   }
   return Promise.all(promises);
 });
@@ -75,7 +76,7 @@ httpPublicApp.get('/hives/:hiveId/projects/:id/summary', (req, res) => {
   const hiveId = req.params.hiveId;
   const projectId = req.params.id;
   if (projectId && projectId.length > 0) {
-    projectProvider.updateSummary(hiveId, projectId).then(summary => {
+    projectSummaryProvider.calculateSummary(hiveId, projectId).then(summary => {
       res.status(200).send(summary);
     }, error => {
       res.status(500).send({ error: error });
@@ -113,7 +114,7 @@ httpPublicApp.get('/hives/:hiveId/schedules/rebuild', (req, res) => {
 });
 
 httpPublicApp.get('/cron/rebuild/summary', (req, res) => {
-  projectProvider.updateAllSummaries().then(summary => {
+  projectSummaryProvider.updateAllSummaries().then(summary => {
     res.status(200).send({ updated: summary.length });
   }, error => {
     res.status(500).send({ error: error });

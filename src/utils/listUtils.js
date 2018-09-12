@@ -19,3 +19,13 @@ export const mapToArray = map => {
     return item;
   }) : [];
 }
+
+export const listToHash = list => {
+  const hash = {};
+  (list || []).forEach(value => {
+    const newValue = { ...value };
+    delete newValue.key;
+    hash[value.key] = newValue;
+  });
+  return hash;
+}

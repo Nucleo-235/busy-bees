@@ -1,0 +1,17 @@
+.project-form .ant-form {
+  text-align: left;
+}
+.project-form .ant-select {
+  min-width: 0;
+  width: 100%;
+}
+.project-form .ant-select {
+  min-width: 0;
+  width: 100%;
+}
+.project-form .ant-input-number {
+  width: 100% !important;
+}
+.project-form .ant-calendar-picker {
+  width: 100% !important;
+}

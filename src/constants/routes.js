@@ -9,3 +9,5 @@ export const EDIT_EXECUTION_FORM = '/h/:hive/executions/:key';
 export const EMPTY_EXECUTION_FORM = '/new-execution';
 export const EXECUTION_LIST = '/executions';
 export const EXECUTION_CALENDAR = '/calendar';
+export const EDIT_PROJECT_FORM = '/h/:hive/projects/:key';
+export const NEW_PROJECT_FORM = '/new-project';

@@ -117,6 +117,7 @@ const ProjectItem = ({ hive, projectKey, project}) =>
     { !project.summary && project.price && <div> <ValueItem value={project.price} title={'Total $'} />
     </div> }
     <div className={"card-actions"}>
+      <Link style={{float: "left"}} to={routes.EDIT_PROJECT_FORM.replace(':hive', hive).replace(':key', projectKey)}>Configurar</Link>
       <Link to={routes.PROJECT_EXECUTION_LIST.replace(':hive', hive).replace(':project', projectKey)}>Histórico</Link>
       <Link to={routes.PROJECT_EXECUTION_FORM.replace(':hive', hive).replace(':project', projectKey)}>Execução</Link>
     </div>
@@ -126,12 +127,14 @@ const groupProjectByType = (projectList, getGroupCallback) => {
   const groupMap = {};
   for (const project of projectList) {
     const group = getGroupCallback(project);
-    let existingGroup = groupMap[group.index];
-    if (existingGroup) {
-      existingGroup.projects.push(project);
-    } else {
-      groupMap[group.index] = group;
-      group.projects.push(project);
+    if (group) {
+      let existingGroup = groupMap[group.index];
+      if (existingGroup) {
+        existingGroup.projects.push(project);
+      } else {
+        groupMap[group.index] = group;
+        group.projects.push(project);
+      }
     }
   }
 
@@ -140,6 +143,9 @@ const groupProjectByType = (projectList, getGroupCallback) => {
 
 const ProjectList = ({ hive, projects }) => {
   const projectGroups = groupProjectByType(projects, project => {
+    if (project.finished)
+      return null;
+
     const group = { projects: [] };
     group.index = project.finished ? 2 : 0;
     group.name = project.finished ? 'Finalizados' : 'Em Aberto';
