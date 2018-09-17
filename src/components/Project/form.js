@@ -145,7 +145,7 @@ class ProjectFormPage extends Component {
           <FormItem label="Colméia">
             {getFieldDecorator('hive', {
               initialValue: hive,
-              rules: [{ required: true, message: 'Colméia obrigatória' }],
+              rules: [{ required: true, message: 'Colméia obrigatória' }]
             })(<Select>
                 {Object.keys(hives).map(hiveKey =>
                   <Option key={hiveKey} value={hiveKey}>{hives[hiveKey].name || hiveKey}</Option>
@@ -210,7 +210,7 @@ class ProjectFormPage extends Component {
       <Col md={8}>
         <FormItem label="Data de Entrega">
           {getFieldDecorator('deadline', {
-            initialValue: (data.deadlineDateValue ? moment(data.deadlineDateValue) : null),
+            initialValue: (data.deadline ? moment(data.deadline) : null),
           })(<DatePicker format={DefaultDatePrettyFormat} />)}
         </FormItem>
       </Col>
@@ -253,7 +253,7 @@ class ProjectFormPage extends Component {
       {isFinihsed && <Col md={{span: 8}}>
         <FormItem label="Data de Finalização" help="Data que o projeto foi finalizado">
           {getFieldDecorator('doneAt', {
-            initialValue: data.doneAtDateValue ? moment(data.doneAtDateValue) : null,
+            initialValue: data.doneAt ? moment(data.doneAt) : null,
             rules: [{ required: true, message: 'Data de Finalização obrigatória' } ],
           })(<DatePicker format={DefaultDatePrettyFormat} />)}
         </FormItem>
@@ -329,7 +329,7 @@ class ProjectFormPage extends Component {
           <Col md={8}>
             <FormItem label="Data Kick-Off" help="Data que o projeto foi/será iniciado">
               {getFieldDecorator('startAt', {
-                initialValue: data.startAtDateValue ? moment(data.startAtDateValue) : null,
+                initialValue: data.startAt ? moment(data.startAt, DefaultDateDBFormat) : null,
                 rules: [{ required: true, message: 'Data Kick-Off obrigatória' } ],
               })(<DatePicker format={DefaultDatePrettyFormat} />)}
             </FormItem>

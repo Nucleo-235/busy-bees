@@ -27,3 +27,5 @@ export const convertDates = (state, format) => {
   });
   return newState;
 }
+
+export const isNullOrUndefined = value => typeof value === 'undefined' || value === null;

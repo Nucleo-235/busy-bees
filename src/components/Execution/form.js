@@ -13,6 +13,7 @@ import * as routes from '../../constants/routes';
 import { db } from '../../firebase';
 import withAuthorization from '../Session/withAuthorization';
 import { mapToArray } from '../../utils/listUtils';
+import { isNullOrUndefined } from '../../utils/stateUtils';
 
 import './form.css';
 
@@ -140,10 +141,10 @@ class ExecutionFormPage extends Component {
       project,
     }
 
-    if (difficulty) {
+    if (!isNullOrUndefined(difficulty)) {
       execution.difficulty = difficulty;
     }
-    if (description) {
+    if (!isNullOrUndefined(description)) {
       execution.description = description;
     }
 
