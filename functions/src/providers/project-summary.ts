@@ -17,7 +17,7 @@ import {
 import * as projectProvier from './project';
 
 const getProjectFilterByType = (project, dateReference) => {
-  if (project.type === 'recurrenct') {
+  if (project.type === 'recurrent') {
     const period = project.period || "month";
     const refDate = dateReference || new Date();
     const startPeriod = moment(refDate).startOf(period).valueOf();

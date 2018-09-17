@@ -86,6 +86,26 @@ httpPublicApp.get('/hives/:hiveId/projects/:id/summary', (req, res) => {
   }
 });
 
+
+httpPublicApp.get('/hives/:hiveId/projects/:id/transfer/:newid', (req, res) => {
+  const hiveId = req.params.hiveId;
+  const projectId = req.params.id;
+  const projectNewId = req.params.newid;
+  admin.database().ref(`/hives/${hiveId}/executions`).orderByChild('project').equalTo(projectId).once('value').then(executionsSnaps => {
+    const promises = [];
+    executionsSnaps.forEach(executionSnap => {
+      promises.push(admin.database().ref(`/hives/${hiveId}/executions/${executionSnap.key}`).update({ project: projectNewId}));
+    })
+    return Promise.all(promises).then(results => {
+      res.status(200).send(results);
+    }, error => {
+      res.status(500).send({ error: error });
+    })
+  }, error => {
+    res.status(500).send({ error: error });
+  });
+});
+
 httpPublicApp.get('/hives/:hiveId/executions/checkDates', (req, res) => {
   const hiveId = req.params.hiveId;
   admin.database().ref(`/hives/${hiveId}/executions`).once('value').then(executionsSnap => {
