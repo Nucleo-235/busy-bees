@@ -16,7 +16,8 @@
     "express": "^4.16.3",
     "firebase-admin": "~5.8.1",
     "firebase-functions": "^0.8.2",
-    "moment": "^2.22.2"
+    "moment": "^2.22.2",
+    "nodemailer": "^4.6.8"
   },
   "devDependencies": {
     "tslint": "^5.8.0",

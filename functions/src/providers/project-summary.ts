@@ -59,6 +59,30 @@ const increaseProjectSummary = (summaryStatuses: ProjectSummary, newData: Projec
   }
 };
 
+const doListProjectExecutions = (hiveId, projectId, project, dateReference = null) => {
+  return admin.database().ref(`/hives/${hiveId}/executions`).orderByChild('project').equalTo(projectId).once('value').then(executionsSnaps => {
+    console.log(`project ${projectId} execs`, executionsSnaps.numChildren());
+    const projectFilter = getProjectFilterByType(project, dateReference);
+
+    const executionsFiltered = [];
+    executionsSnaps.forEach(executionSnap => {
+      // const executionKey = executionSnap.key;
+      const execution = executionSnap.val();
+      if (projectFilter(execution)) {
+        execution.key = executionSnap.key;
+        executionsFiltered.push(execution);
+      }
+    });
+    return executionsFiltered;
+  });
+};
+
+export const listProjectExecutions = (hiveId, projectId, dateReference = null) => {
+  return admin.database().ref(`/hives/${hiveId}/projects/${projectId}`).once('value').then(snap => {
+    return doListProjectExecutions(hiveId, projectId, snap.val(), dateReference);
+  });
+}
+
 export const calculateSummary = (hiveId, projectId, dateReference = null) => {
   return Promise.all([
     admin.database().ref(`/hives/${hiveId}/team`).once('value'),
@@ -71,8 +95,6 @@ export const calculateSummary = (hiveId, projectId, dateReference = null) => {
     const todayStart = moment().startOf('day').valueOf();
     const todayEnd = moment().endOf('day').valueOf();
 
-    const projectFilter = getProjectFilterByType(project, dateReference);
-
     promises.push(projectProvier.listSubProjects(hiveId, projectId).then(subProjectsResults => {
       const subSummary = newProjectSummary();
       for (const subProjectSnap of subProjectsResults) {
@@ -83,32 +105,27 @@ export const calculateSummary = (hiveId, projectId, dateReference = null) => {
       };
       return subSummary;
     }));
-    promises.push(admin.database().ref(`/hives/${hiveId}/executions`).orderByChild('project').equalTo(projectId).once('value').then(executionsSnaps => {
-      console.log(`project ${projectId} execs`, executionsSnaps.numChildren());
+    promises.push(doListProjectExecutions(hiveId, projectId, project, dateReference).then(executions => {
       const executionsSummary = newProjectSummary();
 
-      executionsSnaps.forEach(executionSnap => {
-        // const executionKey = executionSnap.key;
-        const execution = executionSnap.val();
-        if (projectFilter(execution)) {
-          const isPlanned = execution.dateValue > todayEnd || (execution.dateValue >= todayStart && execution.planned);
-          const statusSummary = isPlanned ? executionsSummary.planned : executionsSummary.done;
-          execution.spent = getExecutionSpentPrice(execution, participantsMap[execution.participant], project);
-          execution.earned = getExecutionEarnPrice(execution, participantsMap[execution.participant], project);
-          increaseSummaryStatus(statusSummary, execution);
-          increaseSummaryStatus(executionsSummary.total, execution);
-          if (execution.participant) {
-            let participantSummary = executionsSummary.participants[execution.participant];
-            if (!participantSummary) {
-              participantSummary = newItemSummary();
-              executionsSummary.participants[execution.participant] = participantSummary;
-            }
-            const participantStatusSummary = execution.dateValue && execution.dateValue > todayEnd ? participantSummary.planned : participantSummary.done;
-            increaseSummaryStatus(participantStatusSummary, execution);
-            increaseSummaryStatus(participantSummary.total, execution);
+      for (const execution of executions) {
+        const isPlanned = execution.dateValue > todayEnd || (execution.dateValue >= todayStart && execution.planned);
+        const statusSummary = isPlanned ? executionsSummary.planned : executionsSummary.done;
+        execution.spent = getExecutionSpentPrice(execution, participantsMap[execution.participant], project);
+        execution.earned = getExecutionEarnPrice(execution, participantsMap[execution.participant], project);
+        increaseSummaryStatus(statusSummary, execution);
+        increaseSummaryStatus(executionsSummary.total, execution);
+        if (execution.participant) {
+          let participantSummary = executionsSummary.participants[execution.participant];
+          if (!participantSummary) {
+            participantSummary = newItemSummary();
+            executionsSummary.participants[execution.participant] = participantSummary;
           }
+          const participantStatusSummary = execution.dateValue && execution.dateValue > todayEnd ? participantSummary.planned : participantSummary.done;
+          increaseSummaryStatus(participantStatusSummary, execution);
+          increaseSummaryStatus(participantSummary.total, execution);
         }
-      });
+      }
       return executionsSummary;
     }));
     return Promise.all(promises).then(results => {
@@ -161,6 +178,6 @@ export const updateAllSummaries = () => {
         }
       }
     }
-    return promises.length === 0 ? [] : promiseSerial(promises.map(task => exec => updateSummary(task.hiveId, task.projectId)));
+    return promises.length === 0 ? [] : promiseSerial(promises.map(task => () => updateSummary(task.hiveId, task.projectId)));
   });
 };

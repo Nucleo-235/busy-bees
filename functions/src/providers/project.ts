@@ -25,6 +25,18 @@ export const listProjects = (projectsKeys) : Promise<any[]> => {
   return promises.length === 0 ? Promise.resolve([]) : Promise.all(promises);
 };
 
+export const listMonthProjects = (hiveKey) : Promise<any[]> => {
+  return admin.database().ref(`/hives/${hiveKey}/projects`).orderByChild("type").equalTo('recurrent').once('value').then(snapsResult => {
+    const results = [];
+    snapsResult.forEach(projectSnap => {
+      const project = projectSnap.val();
+      project.key = projectSnap.key;
+      results.push(project);
+    });
+    return results;
+  });
+};
+
 export const listSubProjects = (hiveId, projectId) : Promise<any[]> => {
   return new Promise((resolve, reject) => {
     const parentPath = `/hives/${hiveId}/projects/${projectId}`;
