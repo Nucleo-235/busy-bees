@@ -87,9 +87,12 @@ export const calculateSummary = (hiveId, projectId, dateReference = null) => {
   return Promise.all([
     admin.database().ref(`/hives/${hiveId}/team`).once('value'),
     admin.database().ref(`/hives/${hiveId}/projects/${projectId}`).once('value'),
+    admin.database().ref(`/hives/${hiveId}/priorities`).once('value'),
   ]).then(initialResults => {
     const hiveParticipants = initialResults[0].val();
     const project = initialResults[1].val();
+    const hivePriorities = initialResults[2].val();
+    const prioritiesMap = Object.assign({}, hivePriorities || {}, project.priorities || {});
     const participantsMap = getParticipants(hiveParticipants || {}, project.participants || {});
     const promises = [];
     const todayStart = moment().startOf('day').valueOf();
@@ -112,7 +115,7 @@ export const calculateSummary = (hiveId, projectId, dateReference = null) => {
         const isPlanned = execution.dateValue > todayEnd || (execution.dateValue >= todayStart && execution.planned);
         const statusSummary = isPlanned ? executionsSummary.planned : executionsSummary.done;
         execution.spent = getExecutionSpentPrice(execution, participantsMap[execution.participant], project);
-        execution.earned = getExecutionEarnPrice(execution, participantsMap[execution.participant], project);
+        execution.earned = getExecutionEarnPrice(execution, participantsMap[execution.participant], project, prioritiesMap);
         increaseSummaryStatus(statusSummary, execution);
         increaseSummaryStatus(executionsSummary.total, execution);
         if (execution.participant) {

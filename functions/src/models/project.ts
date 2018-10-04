@@ -17,13 +17,13 @@ export function getParticipants(hiveParticipants, projectParticipants) : Partici
     const participant = new Participant();
     participant.name = participantKey;
     if (hiveParticipants[participantKey])
-      Object.assign(participant, hiveParticipants[participantKey]);
+      Object.assign(participant, { ...hiveParticipants[participantKey] });
 
     const projectParticipant = projectParticipants[participantKey];
     if (projectParticipant && projectParticipant !== true)
       Object.assign(participant, projectParticipants[participantKey]);
 
-    map[participant.name] = participant.name;
+    map[participant.name] = participant;
   }
   return map;
 }

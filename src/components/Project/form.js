@@ -14,11 +14,14 @@ import * as routes from '../../constants/routes';
 import { db } from '../../firebase';
 import withAuthorization from '../Session/withAuthorization';
 
+import ListForm from './listForm';
+import PriorityRowForm from './priorityRowForm';
+
 import './form.css';
 
 import { DefaultDatePrettyFormat, DefaultDateDBFormat } from '../../utils/dateUtils'
 import { updateByPropertyName, removeUndefined, convertDates } from '../../utils/stateUtils'
-import { mapToArray } from '../../utils/listUtils';
+import { mapToArray, listToHash } from '../../utils/listUtils';
 
 const { TextArea } = Input;
 const FormItem = Form.Item;
@@ -63,6 +66,7 @@ class ProjectFormPage extends Component {
           const selectedHiveKey = keys[0];
           const updatedState = { hive: selectedHiveKey };
           this.setState(() => ({ ...this.state, ...updatedState }));
+          this.onHiveSet(selectedHiveKey);
         }
       });
     }
@@ -89,12 +93,15 @@ class ProjectFormPage extends Component {
       } else {
         this.setState(() => ({ ...this.state, hive }));
       }
+      this.onHiveSet(hive);
     }
 
     this.checkHives();
   }
 
   doSave(formValues) {
+    const { hives } = this.state;
+
     const hive = formValues.hive || this.state.hive;
     const projectKey = formValues.projectKey || this.state.data.projectKey;
     
@@ -104,6 +111,14 @@ class ProjectFormPage extends Component {
     const participants = { };
     values.participants.forEach(p => { participants[p] = true; });
     values.participants = participants;
+
+    if (formValues.priorities) {
+      const priorities = listToHash(formValues.priorities);
+      const currentHive = hives[hive];
+      if (!currentHive.priorities || JSON.stringify(currentHive.priorities) !== JSON.stringify(priorities) ) {
+        values.priorities = priorities;
+      }
+    }
 
     if (values.taxPct) {
       values.taxPct = values.taxPct * 0.01;
@@ -136,6 +151,12 @@ class ProjectFormPage extends Component {
     });
   }
 
+  onHiveSet(hive) {
+    db.onceGetHivePrioritiesSnapshot(hive).then(priorities => {
+      this.setState(updateByPropertyName('hivePriorities', priorities.val()));
+    });
+  }
+
   renderSetupForm(hives, hive) {
     const { getFieldDecorator } = this.props.form;
     const { data } = this.state;
@@ -146,7 +167,7 @@ class ProjectFormPage extends Component {
             {getFieldDecorator('hive', {
               initialValue: hive,
               rules: [{ required: true, message: 'Colméia obrigatória' }]
-            })(<Select>
+            })(<Select onChange={value => this.onHiveSet(value)}>
                 {Object.keys(hives).map(hiveKey =>
                   <Option key={hiveKey} value={hiveKey}>{hives[hiveKey].name || hiveKey}</Option>
                 )}
@@ -223,14 +244,18 @@ class ProjectFormPage extends Component {
       hive,
       data,
       selectedType,
+      hivePriorities,
     } = this.state;
 
     const { getFieldDecorator, getFieldValue } = this.props.form;
 
-    const teamAsList = mapToArray(hives[hive].team || {});
+    const currentHive = hives[hive];
+    const teamAsList = mapToArray(currentHive.team || {});
     const teamOptions = teamAsList.map(i => { 
       return { label: (i.name || i.key), value: i.key }
     });
+
+    const priorityAsList = mapToArray(data.priorities || hivePriorities || {}).sort((a,b) => a.hour_price - b.hour_price);
 
     let typeForm = null;
     const finalType = selectedType || data.type;
@@ -344,6 +369,27 @@ class ProjectFormPage extends Component {
           {getFieldDecorator('participants', { 
             initialValue: Object.keys(data.participants || {}),
           })(<CheckboxGroup options={teamOptions} />)}
+        </FormItem>
+
+        <FormItem label="Prioridades">
+          {getFieldDecorator(`priorities`, { initialValue: priorityAsList })(
+            <ListForm renderHeader={() => <Row>
+                <Col md={20} sm={16}>Identificador</Col>
+                <Col md={4} sm={8}>$</Col>
+              </Row>} 
+              renderNested={(item, idx, evUpdate, evRemove) => (<Row key={idx}>
+                <PriorityRowForm value={item} onChange={(values) => evUpdate(values, idx)} />
+                <Col md={24} style={{textAlign: "right"}}>
+                  <Button onClick={() => evRemove(item, idx)}>Remover</Button>
+                </Col>
+              </Row>)} 
+              renderFooter={(evAdd, evRemove) => <Row>
+                <Col md={24} style={{textAlign: "left"}}>
+                  <Button onClick={() => evAdd({ key: null, hour_price: null })}>Adicionar</Button>
+                </Col>
+              </Row>} 
+            />
+          )}
         </FormItem>
 
         <FormItem label="Descrição do projeto">

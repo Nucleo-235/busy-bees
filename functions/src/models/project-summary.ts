@@ -29,8 +29,10 @@ export class ProjectSummary extends Summary {
   earnedProgress: number = 0;
 }
 
-export const getExecutionEarnPrice = (execution, participant, project) => {
-  if (execution.price) {
+export const getExecutionEarnPrice = (execution, participant, project, prioritiesMap) => {
+  if (execution.priority && prioritiesMap[execution.priority]) {
+    return execution.hours * prioritiesMap[execution.priority].hour_price;
+  } else if (execution.price) {
     return execution.price;
   } else if (participant && participant.hour_price) {
     return execution.hours * participant.hour_price;

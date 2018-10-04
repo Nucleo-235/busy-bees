@@ -9,7 +9,7 @@
     "moment-timezone": "^0.5.17",
     "prop-types": "^15.5.10",
     "qs": "^6.5.2",
-    "react": "^16.1.1",
+    "react": "^16.2.0",
     "react-bootstrap": "^0.32.1",
     "react-dom": "^16.1.1",
     "react-moment": "^0.7.0",

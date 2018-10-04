@@ -69,6 +69,7 @@ class ExecutionFormPage extends Component {
             }
           }
           this.setState(() => ({ ...updatedState }));
+          this.onHiveSet(selectedHive);
         }
       });
     }
@@ -99,6 +100,7 @@ class ExecutionFormPage extends Component {
           data.planned = data.planned || data.date > endOfToday;
           this.setState(() => ({ ...data }));
         });
+        this.onHiveSet(hive);
       } else if (this.props.match.params.project) {
         const project = this.props.match.params.project; 
         this.setState(() => ({ ...{
@@ -106,6 +108,7 @@ class ExecutionFormPage extends Component {
           project,
           projectSelectorVisibile: false,
         } }));
+        this.onHiveSet(hive);
       } else {
         this.parseExtraParams();
       }
@@ -127,6 +130,7 @@ class ExecutionFormPage extends Component {
       difficulty,
       description,
       participant,
+      priority,
       planned
     } = this.state;
 
@@ -139,6 +143,7 @@ class ExecutionFormPage extends Component {
       date: date.format(DefaultDateDBFormat),
       participant,
       project,
+      priority,
     }
 
     if (!isNullOrUndefined(difficulty)) {
@@ -173,19 +178,41 @@ class ExecutionFormPage extends Component {
       });
   }
 
+  renderPrioritiesSelect(priorities, priority) {
+    if (priorities) {
+      return <FormItem label="Prioridade"><Select value={priority} onChange={value => this.setState(updateByPropertyName('priority', value))}>
+        {priorities.map(item =>
+          <Option key={item.key} value={item.key}>{item.key} ({item.hour_price})</Option>
+        )}
+      </Select></FormItem>
+    } else
+      return <FormItem label="Prioridade"><div>No Priorities loaded</div></FormItem>
+  }
+
   renderParticipantsSelect(participants, participant) {
     if (participants) {
-      return <FormItem><Select value={participant} onChange={value => this.setState(updateByPropertyName('participant', value))}>
+      return <FormItem label="Membro"><Select value={participant} onChange={value => this.setState(updateByPropertyName('participant', value))}>
         {Object.keys(participants).map(key =>
           <Option key={key} value={key}>{participants[key].name || key}</Option>
         )}
       </Select></FormItem>
     } else
-      return <FormItem><div>No Participants loaded</div></FormItem>
+      return <FormItem label="Membro"><div>No Participants loaded</div></FormItem>
+  }
+
+  onHiveChange(hive) {
+    this.setState(updateByPropertyName('hive', hive));
+    this.onHiveSet(hive);
+  }
+
+  onHiveSet(hive) {
+    db.onceGetHivePrioritiesSnapshot(hive).then(priorities => {
+      this.setState(updateByPropertyName('hivePriorities', priorities.val()));
+    });
   }
 
   renderHives(hives, hive) {
-    return <FormItem><Select value={hive} onChange={value => this.setState(updateByPropertyName('hive', value))}>
+    return <FormItem label="Colméia"><Select value={hive} onChange={value => this.onHiveChange(value)}>
         {Object.keys(hives).map(hiveKey =>
           <Option key={hiveKey} value={hiveKey}>{hives[hiveKey].name || hiveKey}</Option>
         )}
@@ -193,7 +220,7 @@ class ExecutionFormPage extends Component {
   }
 
   renderProjects(projects, project) {
-    return <FormItem><Select value={project} onChange={value => this.setState(updateByPropertyName('project', value))}>
+    return <FormItem label="Projeto"><Select value={project} onChange={value => this.setState(updateByPropertyName('project', value))}>
         {projects.map(projectData =>
           <Option key={projectData.key} value={projectData.key}>{projectData.name || projectData.key}</Option>
         )}
@@ -210,11 +237,14 @@ class ExecutionFormPage extends Component {
       date,
       description,
       participant,
+      priority,
       planned,
+      hivePriorities,
       error,
     } = this.state;
 
     const participants = hives[hive].projects[project].participants;
+    const priorities = mapToArray(hives[hive].projects[project].priorities || hivePriorities || {}).sort((a,b) => a.hour_price - b.hour_price);
 
     const startOfToday = moment().startOf('day');
     const endOfToday = moment().endOf('day');
@@ -224,16 +254,17 @@ class ExecutionFormPage extends Component {
       project === null ||
       hours === null ||
       date === null ||
-      participant === null;
+      participant === null || 
+      priority === null;
 
     return (
       <div>
-        <FormItem>
+        <FormItem label="Data">
           <DatePicker value={date} format={DefaultDatePrettyFormat}
             onChange={value => this.setState(updateByPropertyName('date', value))}
           />
         </FormItem>
-        <FormItem>
+        <FormItem label="Horas">
           <InputNumber
             value={hours}
             min={0} step={0.01}
@@ -242,7 +273,7 @@ class ExecutionFormPage extends Component {
             required
           />
         </FormItem>
-        <FormItem>
+        <FormItem label="Dificuldade">
           <InputNumber
             value={difficulty}
             min={0} step={0.01}
@@ -253,11 +284,15 @@ class ExecutionFormPage extends Component {
 
         {this.renderParticipantsSelect(participants, participant)}
 
-        <TextArea
-          value={description}
-          onChange={event => this.setState(updateByPropertyName('description', event.target.value))}
-          placeholder="Descrição"
-        />
+        {this.renderPrioritiesSelect(priorities, priority)}
+
+        <FormItem label="Descrição">
+          <TextArea
+            value={description}
+            onChange={event => this.setState(updateByPropertyName('description', event.target.value))}
+            placeholder="Descrição"
+          />
+        </FormItem>
 
         { date >= startOfToday && date<= endOfToday && <FormItem>
           <Checkbox

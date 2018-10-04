@@ -112,6 +112,14 @@ export const onceGetProjectExecutionsSnapshot = (hive, project) => {
   return db.ref(`/hives/${hive}/executions`).orderByChild('project').equalTo(project).once('value');
 };
 
+export const onceGetHiveTeamSnapshot = (hive) => {
+  return db.ref(`/hives/${hive}/teams`).once('value');
+};
+
+export const onceGetHivePrioritiesSnapshot = (hive) => {
+  return db.ref(`/hives/${hive}/priorities`).once('value');
+};
+
 export const onceGetUserExecutionsMap = (range = null) => {
   const userId = auth.currentUser.uid;
   if (range) {
