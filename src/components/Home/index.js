@@ -108,7 +108,6 @@ const ProjectSummary = ({project, summary}) => {
     { project.price && <ProgressItemInverse pct={summary.spentProgress || 0} title={'Gasto $'} /> }
     { !project.totalDifficulty && <ValueItem value={summary.done.hours} title={'Gasto (h)'} /> }
     { !project.price && <ValueItem value={summary.done.spent} title={'Gasto $'} /> }
-    { !project.price && <ValueItem value={summary.done.earned-summary.done.spent} title={'Lucro'} /> }
   </div>
 }
 
