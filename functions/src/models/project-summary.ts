@@ -1,3 +1,5 @@
+import { findPriority } from './project';
+
 export interface ISummaryStatus {
   difficulty: number;
   hours: number;
@@ -19,6 +21,7 @@ export class Summary {
 }
 export class ProjectSummary extends Summary {
   participants: { [participant: string]: Summary } = {};
+  priorities: { [priority: string]: Summary } = {};
 
   todoDifficulty: number = 0;
   difficultyProgress: number = 0;
@@ -30,8 +33,9 @@ export class ProjectSummary extends Summary {
 }
 
 export const getExecutionEarnPrice = (execution, participant, project, prioritiesMap) => {
-  if (execution.priority && prioritiesMap[execution.priority]) {
-    return execution.hours * prioritiesMap[execution.priority].hour_price;
+  const priority = findPriority(execution.priority, prioritiesMap);
+  if (priority) {
+    return execution.hours * priority.hour_price;
   } else if (execution.price) {
     return execution.price;
   } else if (participant && participant.hour_price) {

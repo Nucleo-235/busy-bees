@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as moment from 'moment';
 
 import { promiseSerial } from '../utils/promises';
-import { getParticipants } from '../models/project';
+import { getParticipants, getPriorities, findPriority } from '../models/project';
 import { 
   ISummaryStatus, 
   SummaryStatus, 
@@ -43,25 +43,29 @@ const increaseSummaryStatuses = (summaryStatuses: Summary, newData: Summary) => 
   increaseSummaryStatus(summaryStatuses.total, newData.total);
 };
 
-const increaseProjectSummary = (summaryStatuses: ProjectSummary, newData: ProjectSummary) => {
-  increaseSummaryStatuses(summaryStatuses, newData);
-  if (newData.participants) {
-    const participantsKeys = Object.keys(newData.participants);
-    for (const participant of participantsKeys) {
-      const newParticipantSummary = newData.participants[participant];
-      let currentParticipantSummary = summaryStatuses.participants[participant];
-      if (!currentParticipantSummary) {
-        currentParticipantSummary = new Summary();
-        summaryStatuses.participants[participant] = currentParticipantSummary;
+const increatedNestedSummary = (currentNestedData, newNestedData) => {
+  if (newNestedData) {
+    const keys = Object.keys(newNestedData);
+    for (const nestedKey of keys) {
+      let currenteNestedItem = currentNestedData[nestedKey];
+      if (!currenteNestedItem) {
+        currenteNestedItem = new Summary();
+        currentNestedData[nestedKey] = currenteNestedItem;
       }
-      increaseSummaryStatuses(currentParticipantSummary, newParticipantSummary);
+      increaseSummaryStatuses(currenteNestedItem, newNestedData[nestedKey]);
     }
   }
+}
+
+const increaseProjectSummary = (summaryStatuses: ProjectSummary, newData: ProjectSummary) => {
+  increaseSummaryStatuses(summaryStatuses, newData);
+  increatedNestedSummary(summaryStatuses.participants, newData.participants);
+  increatedNestedSummary(summaryStatuses.priorities, newData.priorities);
 };
 
 const doListProjectExecutions = (hiveId, projectId, project, dateReference = null) => {
   return admin.database().ref(`/hives/${hiveId}/executions`).orderByChild('project').equalTo(projectId).once('value').then(executionsSnaps => {
-    console.log(`project ${projectId} execs`, executionsSnaps.numChildren());
+    // console.log(`project ${projectId} execs`, executionsSnaps.numChildren());
     const projectFilter = getProjectFilterByType(project, dateReference);
 
     const executionsFiltered = [];
@@ -91,8 +95,7 @@ export const calculateSummary = (hiveId, projectId, dateReference = null) => {
   ]).then(initialResults => {
     const hiveParticipants = initialResults[0].val();
     const project = initialResults[1].val();
-    const hivePriorities = initialResults[2].val();
-    const prioritiesMap = Object.assign({}, hivePriorities || {}, project.priorities || {});
+    const prioritiesMap = getPriorities(initialResults[2].val(), project.priorities);
     const participantsMap = getParticipants(hiveParticipants || {}, project.participants || {});
     const promises = [];
     const todayStart = moment().startOf('day').valueOf();
@@ -119,14 +122,25 @@ export const calculateSummary = (hiveId, projectId, dateReference = null) => {
         increaseSummaryStatus(statusSummary, execution);
         increaseSummaryStatus(executionsSummary.total, execution);
         if (execution.participant) {
-          let participantSummary = executionsSummary.participants[execution.participant];
-          if (!participantSummary) {
-            participantSummary = newItemSummary();
-            executionsSummary.participants[execution.participant] = participantSummary;
+          let nestedSummary = executionsSummary.participants[execution.participant];
+          if (!nestedSummary) {
+            nestedSummary = newItemSummary();
+            executionsSummary.participants[execution.participant] = nestedSummary;
           }
-          const participantStatusSummary = execution.dateValue && execution.dateValue > todayEnd ? participantSummary.planned : participantSummary.done;
-          increaseSummaryStatus(participantStatusSummary, execution);
-          increaseSummaryStatus(participantSummary.total, execution);
+          const nestedStatusSummary = execution.dateValue && execution.dateValue > todayEnd ? nestedSummary.planned : nestedSummary.done;
+          increaseSummaryStatus(nestedStatusSummary, execution);
+          increaseSummaryStatus(nestedSummary.total, execution);
+        }
+        const priority = findPriority(execution.priority, prioritiesMap);
+        if (priority) {
+          let nestedSummary = executionsSummary.priorities[priority.key];
+          if (!nestedSummary) {
+            nestedSummary = newItemSummary();
+            executionsSummary.priorities[priority.key] = nestedSummary;
+          }
+          const nestedStatusSummary = execution.dateValue && execution.dateValue > todayEnd ? nestedSummary.planned : nestedSummary.done;
+          increaseSummaryStatus(nestedStatusSummary, execution);
+          increaseSummaryStatus(nestedSummary.total, execution);
         }
       }
       return executionsSummary;

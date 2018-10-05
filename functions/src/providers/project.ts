@@ -2,6 +2,8 @@
 import * as admin from 'firebase-admin';
 import * as moment from 'moment';
 
+import { getPriorities } from '../models/project';
+
 export const getCachePath = (hive, project) => {
   return `/parentCache/${hive}___${project}`;
 }
@@ -15,6 +17,16 @@ export const cacheProjectParent = (hive, project, parentProjectPath) => {
       admin.database().ref(cachePath).remove().then(() => { resolve(true) }, () => { resolve(true) });
     })
   }
+};
+
+export const finalProjectPriorities = (hiveId, projectId) => {
+  return Promise.all([
+    admin.database().ref(`/hives/${hiveId}/priorities`).once('value'),
+    admin.database().ref(`/hives/${hiveId}/project/${projectId}/priorities`).once('value')
+  ]).then(results => {
+    return getPriorities(results[0].val(), results[1].val());
+  })
+  
 };
 
 export const listProjects = (projectsKeys) : Promise<any[]> => {
