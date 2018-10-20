@@ -62,3 +62,6 @@ typings/
 .env
 
 .runtimeconfig.json
+
+src/shared-lib/
+functions/lib/
