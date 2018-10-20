@@ -2,7 +2,7 @@ import * as functions from 'firebase-functions';
 import * as nodemailer from 'nodemailer'
 import * as moment from 'moment';
 
-import { findPriority } from '../models/project';
+import { findPriority } from '../shared/models/priority';
 
 const APP_NAME = 'Busy Bees';
 

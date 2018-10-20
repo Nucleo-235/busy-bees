@@ -1,20 +1,21 @@
 import * as admin from 'firebase-admin';
 import * as moment from 'moment';
 
-import { promiseSerial } from '../utils/promises';
-import { getParticipants, getPriorities, findPriority } from '../models/project';
+import { promiseSerial } from '../shared/utils/promises';
+import { getParticipants } from '../shared/models/project';
+import { getPriorities, findPriority } from '../shared/models/priority';
 import { 
   ISummaryStatus, 
   SummaryStatus, 
   Summary, 
   ProjectSummary, 
-  getExecutionEarnPrice, 
-  getExecutionSpentPrice, 
   newProjectSummary, 
   newItemSummary, 
-} from '../models/project-summary';
+} from '../shared/models/project-summary';
 
 import * as projectProvier from './project';
+import { snapsToModelList, castList } from '../shared/utils/model-utils';
+import { Execution, CalculatedExecution } from '../shared/models/execution';
 
 const getProjectFilterByType = (project, dateReference) => {
   if (project.type === 'recurrent') {
@@ -68,16 +69,7 @@ const doListProjectExecutions = (hiveId, projectId, project, dateReference = nul
     // console.log(`project ${projectId} execs`, executionsSnaps.numChildren());
     const projectFilter = getProjectFilterByType(project, dateReference);
 
-    const executionsFiltered = [];
-    executionsSnaps.forEach(executionSnap => {
-      // const executionKey = executionSnap.key;
-      const execution = executionSnap.val();
-      if (projectFilter(execution)) {
-        execution.key = executionSnap.key;
-        executionsFiltered.push(execution);
-      }
-    });
-    return executionsFiltered;
+    return snapsToModelList(executionsSnaps, Execution).filter(projectFilter);
   });
 };
 
@@ -111,14 +103,16 @@ export const calculateSummary = (hiveId, projectId, dateReference = null) => {
       };
       return subSummary;
     }));
-    promises.push(doListProjectExecutions(hiveId, projectId, project, dateReference).then(executions => {
+    promises.push(doListProjectExecutions(hiveId, projectId, project, dateReference).then(originalExections => {
       const executionsSummary = newProjectSummary();
+
+      const executions = castList(originalExections, CalculatedExecution);
 
       for (const execution of executions) {
         const isPlanned = execution.dateValue > todayEnd || (execution.dateValue >= todayStart && execution.planned);
         const statusSummary = isPlanned ? executionsSummary.planned : executionsSummary.done;
-        execution.spent = getExecutionSpentPrice(execution, participantsMap[execution.participant], project);
-        execution.earned = getExecutionEarnPrice(execution, participantsMap[execution.participant], project, prioritiesMap);
+        execution.spent = execution.getSpentPrice(participantsMap[execution.participant], project);
+        execution.earned = execution.getEarnPrice(participantsMap[execution.participant], project, prioritiesMap);
         increaseSummaryStatus(statusSummary, execution);
         increaseSummaryStatus(executionsSummary.total, execution);
         if (execution.participant) {

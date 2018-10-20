@@ -113,7 +113,7 @@ export const onceGetProjectExecutionsSnapshot = (hive, project) => {
 };
 
 export const onceGetHiveTeamSnapshot = (hive) => {
-  return db.ref(`/hives/${hive}/teams`).once('value');
+  return db.ref(`/hives/${hive}/team`).once('value');
 };
 
 export const onceGetHivePrioritiesSnapshot = (hive) => {

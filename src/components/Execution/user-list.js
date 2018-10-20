@@ -36,7 +36,7 @@ class UserExecutionListPage extends Component {
     return (
       <div style={{ textAlign: "center", width: "100%" }}>
         <h3>Minhas Execuções</h3>
-        {executions && <ExecutionList executions={executions} showProject={true} />}
+        {executions && <ExecutionList executions={executions} showEarned={false} showProject={true} />}
       </div>
     );
   }

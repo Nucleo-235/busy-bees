@@ -2,7 +2,8 @@
   "name": "functions",
   "scripts": {
     "lint": "./node_modules/.bin/tslint -p tslint.json",
-    "build": "./node_modules/.bin/tsc",
+    "lib-to-shared": "if [ -d ../src/shared-lib ]; then rm -rf ../src/shared-lib; fi && cp -r ./lib/shared ../src/shared-lib",
+    "build": "./node_modules/.bin/tsc && npm run lib-to-shared",
     "serve": "npm run build && firebase serve --only functions",
     "shell": "npm run build && firebase experimental:functions:shell",
     "start": "npm run shell",

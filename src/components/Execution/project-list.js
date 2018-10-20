@@ -10,11 +10,17 @@ import withAuthorization from '../Session/withAuthorization';
 
 import { ExecutionList } from './list';
 import { snapToArray } from '../../utils/listUtils';
+import { updateByPropertyName } from '../../utils/stateUtils'
+
+import { getParticipants } from '../../shared-lib/models/project'
+import { getPriorities } from '../../shared-lib/models/priority'
 
 const INITIAL_STATE = {
   hive: null,
   project: null,
   projectModel: null,
+  hivePriorities: null,
+  hiveParticipants: null,
   participants: null,
   executions: null,
 };
@@ -28,6 +34,8 @@ class ProjectExecutionListPage extends Component {
   componentDidMount() {
     let {
       hive,
+      hivePriorities,
+      hiveParticipants,
       project,
       projectModel,
     } = this.state;
@@ -50,6 +58,18 @@ class ProjectExecutionListPage extends Component {
       });
     }
 
+    if (!hivePriorities) {
+      db.onceGetHivePrioritiesSnapshot(hive).then(snap => {
+        this.setState(updateByPropertyName('hivePriorities', snap.val()));
+      });
+    }
+
+    if (!hiveParticipants) {
+      db.onceGetHiveTeamSnapshot(hive).then(snap => {
+        this.setState(updateByPropertyName('hiveParticipants', snap.val()));
+      });
+    }
+
     db.onceGetProjectExecutionsSnapshot(hive, project).then(executionsSnap => {
       this.setState(() => ({ ...{
         executions: snapToArray(executionsSnap).sort((a, b) => (b.dateValue || 0) - (a.dateValue || 0))
@@ -62,14 +82,29 @@ class ProjectExecutionListPage extends Component {
     const {
       projectModel,
       hive,
+      hivePriorities,
+      hiveParticipants,
       executions,
     } = this.state;
+
+    let prioritiesMap = {};
+    let participantsMap = {};
+    if (projectModel) {
+      participantsMap = projectModel.participants || {}
+      if (hivePriorities)
+        prioritiesMap = getPriorities(hivePriorities, projectModel.priorities);
+
+      if (hiveParticipants) {
+        participantsMap = getParticipants(hiveParticipants || {}, projectModel.participants || {});
+      }
+    }
 
     return (
       <div style={{ textAlign: "center", width: "100%" }}>
         { projectModel && <h2>{projectModel.name}</h2> }
         <h3>Execuções</h3>
-        {executions && <ExecutionList hive={hive} executions={executions} />}
+        {executions && <ExecutionList hive={hive} executions={executions} showSpent={true} showEarned={true} 
+          project={projectModel} prioritiesMap={prioritiesMap} participantsMap={participantsMap} />}
       </div>
     );
   }

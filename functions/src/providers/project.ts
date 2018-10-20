@@ -2,7 +2,7 @@
 import * as admin from 'firebase-admin';
 import * as moment from 'moment';
 
-import { getPriorities } from '../models/project';
+import { getPriorities } from '../shared/models/priority';
 
 export const getCachePath = (hive, project) => {
   return `/parentCache/${hive}___${project}`;
