@@ -8,7 +8,7 @@ import * as moment from 'moment';
 import { Link } from 'react-router-dom';
 import * as routes from '../../constants/routes';
 
-import { Row, Col, Card, Progress } from "antd";
+import { Row, Col, Card, Progress, Button } from "antd";
 import { mapToArray } from '../../utils/listUtils';
 
 import './index.css';
@@ -143,11 +143,13 @@ const groupProjectByType = (projectList, getGroupCallback) => {
 
 const ProjectList = ({ hive, projects }) => {
   const projectGroups = groupProjectByType(projects, project => {
-    if (project.finished)
+    if (project.finished && !project.deadline)
       return null;
 
     const group = { projects: [] };
     group.index = project.finished ? 2 : 0;
+    group.hidden = project.finished;
+    group.allowHide = project.finished;
     group.name = project.finished ? 'Finalizados' : 'Em Aberto';
     group.name += project.deadline ? ' - com Prazo' : ' - sem Prazo';
     group.sortingCB = (a, b) => (a.deadlineDateValue || 0) - (b.deadlineDateValue || 0);
@@ -158,18 +160,24 @@ const ProjectList = ({ hive, projects }) => {
     
     return group;
   });
+
+  const toggleHidden = (project => {
+    project.hidden = !project.hidden;
+  })
   
   return <div>
     {projectGroups.map(groupProject =>
       <div key={groupProject.name}>
-        <h3>{groupProject.name}</h3>
-        <Row gutter={8}>
+        {groupProject.allowHide
+          ? (<h3>{groupProject.name} - <Button onClick={() => toggleHidden(groupProject)}>{groupProject.hidden ? 'Mostrar' : 'Esconder'}</Button></h3>)
+          : (<h3>{groupProject.name}</h3>)}
+        {!groupProject.hidden && <Row gutter={8}>
           {groupProject.projects.sort(groupProject.sortingCB).map(project =>
             <Col key={project.key} md={{span: 8}} sm={{span: 12}} xs={{span: 24}} className={'projectItem'}>
               <ProjectItem hive={hive} projectKey={project.key} project={project} />
             </Col>
           )}
-        </Row>
+        </Row>}
       </div>
     )}</div>
 }

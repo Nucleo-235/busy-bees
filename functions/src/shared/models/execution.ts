@@ -34,15 +34,17 @@ export class Execution {
 
   getEarnPrice = (participant, project, prioritiesMap) => {
     const execution = this;
-    const priority = findPriority(execution.priority, prioritiesMap);
-    if (priority) {
-      return execution.hours * priority.hour_price;
-    } else if (execution.price) {
+    if (execution.price) {
       return execution.price;
-    } else if (participant && participant.hour_price) {
-      return execution.hours * participant.hour_price;
     } else {
-      return execution.hours * project.hour_price;
+      const priority = findPriority(execution.priority, prioritiesMap);
+      if (priority) {
+        return execution.hours * priority.hour_price;
+      } else if (participant && participant.hour_price) {
+        return execution.hours * participant.hour_price;
+      } else {
+        return execution.hours * project.hour_price;
+      }
     }
   }
 }
